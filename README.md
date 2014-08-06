@@ -261,6 +261,18 @@ int readLocation(const char* feedId, location_read_callback callback,
 
 ```
 
+Delete Values
+-------------
+
+You can use the following function to delete values within a stream by providing a from and end date/time:
+
+```
+int deleteValues(const char* feedId, const char* streamName, 
+                 const char* from, const char* end);
+```
+
+The timestamps from and end need to be in an ISO 8601 format: yyyy-mm-ddTHH:MM:SS.SSSZ. Note the Z for Zulu time.
+
 Examples
 ========
 
@@ -308,6 +320,11 @@ UnoReadLocation
 ---------------
 
 This one reads location data of a feed from M2X server, and prints them to Serial interfact. You can check the output in the `Serial Monitor` of the Arduino IDE.
+
+UnoDelete
+---------
+
+This example shows how to delete values within a stream by providing a date/time range.
 
 YunPost
 -------
