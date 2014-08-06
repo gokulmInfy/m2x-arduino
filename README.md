@@ -264,14 +264,14 @@ int readLocation(const char* feedId, location_read_callback callback,
 Delete Values
 -------------
 
-You can use the following function to delete values within a stream by providing a from and end date/time:
+You can use the following function to delete values within a stream by providing a `from` and `end` date/time:
 
 ```
 int deleteValues(const char* feedId, const char* streamName, 
                  const char* from, const char* end);
 ```
 
-The timestamps from and end need to be in an ISO 8601 format: yyyy-mm-ddTHH:MM:SS.SSSZ. Note the Z for Zulu time.
+The timestamps `from` and `end` need to be in an ISO 8601 format: yyyy-mm-ddTHH:MM:SS.SSSZ. Note the Z for Zulu time.
 
 Examples
 ========
