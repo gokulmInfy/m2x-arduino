@@ -14,7 +14,9 @@ char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
 const char *streamNames[] = { "temperature", "humidity" };
 int counts[] = { 2, 1 };
-const char *ats[] = { "2013-09-09T19:15:00Z", NULL, NULL };
+const char *ats[] = { "2013-09-09T19:15:00Z",
+                      "2013-09-09T19:15:10Z",
+                      "2013-09-09T19:15:20Z"};
 double values[] = { 10.0, 20.0, 7.5 };
 
 WiFiClient client;

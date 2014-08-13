@@ -12,7 +12,9 @@ char incomingByte;      // a variable to read incoming Console data into
 // Values to post, for simplicity, we just use predefined data here
 const char *streamNames[] = { "temperature", "humidity" };
 int counts[] = { 2, 1 };
-const char *ats[] = { "2013-11-11T11:11:11Z", NULL, NULL };
+const char *ats[] = { "2013-09-09T19:15:00Z",
+                      "2013-09-09T19:15:10Z",
+                      "2013-09-09T19:15:20Z"};
 double values[] = { 23.75, 24.125, 6.375 };
 
 YunClient client;
