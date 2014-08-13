@@ -3,7 +3,7 @@ Arduino M2X API Client
 
 The Arduino library is used to send/receive data to/from [AT&amp;T's M2X service](https://m2x.att.com/) from [Arduino](http://www.arduino.cc/) based devices.
 
-**NOTE**: Unless stated otherwise, the following instructions are specific to [Arduino Uno](http://arduino.cc/en/Main/arduinoBoardUno) board. If you are using other boards, the exact steps may vary.
+**NOTE**: Unless stated otherwise, the following instructions are specific to [Arduino Uno](http://arduino.cc/en/Main/arduinoBoardUno) boards. If you are using other boards, the exact steps may vary.
 
 
 Getting Started
@@ -12,7 +12,7 @@ Getting Started
 2. Obtain your _Master Key_ from the Master Keys tab of your [Account Settings](https://m2x.att.com/account) screen.
 3. Create your first [Data Source Blueprint](https://m2x.att.com/blueprints) and copy its _Feed ID_.
 4. Review the [M2X API Documentation](https://m2x.att.com/developer/documentation/overview).
-5. Obtain an Arduino with built in wifi or ethernet, or a separate wifi or ethernet shield and [set it up](http://arduino.cc/en/Guide/HomePage). These docs were written for an [__Arduino Uno__](http://arduino.cc/en/Main/arduinoBoardUno) with a wifi or ethernet shield but the instructions can be adapted for other Arduino models.
+5. Obtain an Arduino with built-in wifi or ethernet, or a separate wifi or ethernet shield and [set it up](http://arduino.cc/en/Guide/HomePage). These docs were written for an [__Arduino Uno__](http://arduino.cc/en/Main/arduinoBoardUno) with a wifi or ethernet shield but the instructions can be adapted for other Arduino models.
 
 Please consult the [M2X glossary](https://m2x.att.com/developer/documentation/glossary) if you have questions about any M2X specific terms.
 
@@ -23,19 +23,18 @@ This library depends on [jsonlite](https://github.com/citrusbyte/jsonlite), the 
 
 1. Clone the [jsonlite](https://github.com/citrusbyte/jsonlite) repository.
 
-   **NOTE**: Since we are now using the old v1.1.2 API(we will migrate to the new API soon), please use the fork version of jsonlite listed above instead of the original one.
+   **NOTE**: Since we are now using the old v1.1.2 API (we will migrate to the new API soon), please use the fork version of jsonlite listed above instead of the original one.
 
 2. Open the Arduino IDE, click `Sketch->Import Library...->Add Library...`, then navigate to `amalgamated/jsonlite` folder in the cloned jsonlite repository. The jsonlite library will be imported to Arduino this way.
 
-   **NOTE**: If you cloned the jsonlite library, there will be 3 folders named jsonlite:
+   **NOTE**: If you cloned the jsonlite library, there will be three (3) folders named jsonlite:
    * `jsonlite`: the repo folder
    * `jsonlite/jsonlite`: the un-flattened jsonlite source folder
    * `jsonlite/amalgamated/jsonlite`: the flattened jsonlite source for arduino
 
-   The last one here should be the one to use, the first 2 won't work!
+   You should use the final library listed here as the first two won't work!
 3. Use the instructions outlined in Step 2 above to import the `M2XStreamClient` library in the current folder.
 4. Now you can find M2X examples under `File->Examples->M2XStreamClient`
-5. Enjoy coding!
 
 Hardware Setup
 ==============
