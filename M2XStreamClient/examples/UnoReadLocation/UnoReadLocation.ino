@@ -10,7 +10,7 @@ int keyIndex = 0;            // your network key Index number (needed only for W
 
 int status = WL_IDLE_STATUS;
 
-char feedId[] = "<feed id>"; // Feed you want to post to
+char feedId[] = "<feed id>"; // Feed you want to read
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
 WiFiClient client;

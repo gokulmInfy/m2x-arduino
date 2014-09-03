@@ -4,8 +4,8 @@
 
 #include "M2XStreamClient.h"
 
-char feedId[] = "<feed id>"; // Feed you want to post to
-char streamName[] = "<stream name>"; // Stream you want to post to
+char feedId[] = "<feed id>"; // Feed you want to push to
+char streamName[] = "<stream name>"; // Stream you want to push to
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
 char incomingByte;      // a variable to read incoming Console data into
@@ -21,7 +21,7 @@ void setup() {
   // Wait for the Console port to connect
   while(!Console);
 
-  Console.println("type T to post temperature data to m2x");
+  Console.println("type T to push temperature data to m2x");
 
 }
 
@@ -32,7 +32,7 @@ void loop() {
     incomingByte = Console.read();
     Console.println(incomingByte);
 
-    // if the user presses 'T', post the temperature to m2x
+    // if the user presses 'T', push the temperature to m2x
     if (incomingByte == 'T') {
 
       int sensorVal = analogRead(sensorPin);
@@ -54,7 +54,7 @@ void loop() {
       float temperature = (voltage - .5) * 100;
       Console.println(temperature);
 
-      int response = m2xClient.post(feedId, streamName, temperature);
+      int response = m2xClient.put(feedId, streamName, temperature);
       Console.print("M2x client response code: ");
       Console.println(response);
     }

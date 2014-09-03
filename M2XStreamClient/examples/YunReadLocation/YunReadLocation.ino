@@ -50,7 +50,7 @@ void loop() {
     incomingByte = Console.read();
     Console.println(incomingByte);
 
-    // if the user presses 'T', post the temperature to m2x
+    // if the user presses 'T', reads the location
     if (incomingByte == 'T') {
       int response = m2xClient.readLocation(feedId, on_location_found, NULL);
       Console.print("M2x client response code: ");

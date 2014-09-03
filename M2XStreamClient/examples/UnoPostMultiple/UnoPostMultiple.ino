@@ -9,7 +9,7 @@ char pass[] = "<WPA password>";    // your network password (use for WPA, or use
 
 int status = WL_IDLE_STATUS;
 
-char feedId[] = "<feed id>"; // Feed you want to post to
+char feedId[] = "<feed id>"; // Feed you want to push to
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
 const char *streamNames[] = { "temperature", "humidity" };

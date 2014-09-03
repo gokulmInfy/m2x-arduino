@@ -4,12 +4,12 @@
 
 #include "M2XStreamClient.h"
 
-char feedId[] = "<feed id>"; // Feed you want to post to
+char feedId[] = "<feed id>"; // Feed you want to push to
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
 char incomingByte;      // a variable to read incoming Console data into
 
-// Values to post, for simplicity, we just use predefined data here
+// Values to push, for simplicity, we just use predefined data here
 const char *streamNames[] = { "temperature", "humidity" };
 int counts[] = { 2, 1 };
 const char *ats[] = { "2013-09-09T19:15:00Z",
@@ -27,7 +27,7 @@ void setup() {
   // Wait for the Console port to connect
   while(!Console);
 
-  Console.println("type T to post multiple stream data to m2x");
+  Console.println("type T to push multiple stream data to m2x");
 
 }
 
@@ -38,7 +38,7 @@ void loop() {
     incomingByte = Console.read();
     Console.println(incomingByte);
 
-    // if the user presses 'T', post the data to m2x
+    // if the user presses 'T', push the data to m2x
     if (incomingByte == 'T') {
       int response = m2xClient.postMultiple(feedId, 2, streamNames,
                                             counts, ats, values);

@@ -4,7 +4,7 @@
 
 #include "M2XStreamClient.h"
 
-char feedId[] = "<feed id>"; // Feed you want to post locations to
+char feedId[] = "<feed id>"; // Feed you want to update
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
 char incomingByte;      // a variable to read incoming Console data into
@@ -25,7 +25,7 @@ void setup() {
   // Wait for the Console port to connect
   while(!Console);
 
-  Console.println("type T to post location to m2x");
+  Console.println("type T to push location to m2x");
 }
 
 void loop() {
@@ -35,7 +35,7 @@ void loop() {
     incomingByte = Console.read();
     Console.println(incomingByte);
 
-    // if the user presses 'T', post the temperature to m2x
+    // if the user presses 'T', push the location to m2x
     if (incomingByte == 'T') {
       int response = m2xClient.updateLocation(feedId, name, latitude,
                                               longitude, elevation);
