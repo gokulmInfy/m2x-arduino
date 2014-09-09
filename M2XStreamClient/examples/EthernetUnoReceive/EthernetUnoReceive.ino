@@ -17,9 +17,11 @@ char m2xKey[] = "<M2X access key>"; // Your M2X access key
 EthernetClient client;
 M2XStreamClient m2xClient(&client, m2xKey);
 
-void on_data_point_found(const char* at, const char* value, int index, void* context) {
+void on_data_point_found(const char* at, const char* value, int index, void* context, int type) {
   Serial.print("Found a data point, index:");
   Serial.println(index);
+  Serial.print("Type:");
+  Serial.println(type);
   Serial.print("At:");
   Serial.println(at);
   Serial.print("Value:");

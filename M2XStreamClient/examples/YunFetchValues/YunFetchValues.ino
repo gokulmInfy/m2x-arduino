@@ -14,9 +14,11 @@ YunClient client;
 M2XStreamClient m2xClient(&client, m2xKey);
 
 // Callback function used to process fetched data
-void on_data_point_found(const char* at, const char* value, int index, void* context) {
+void on_data_point_found(const char* at, const char* value, int index, void* context, int type) {
   Console.print("Found a data point, index:");
   Console.println(index);
+  Serial.print("Type:");
+  Serial.println(type);
   Console.print("At:");
   Console.println(at);
   Console.print("Value:");

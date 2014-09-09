@@ -327,7 +327,7 @@ void M2XStreamClient::close() {
 
 int M2XStreamClient::readStreamValue(stream_value_read_callback callback,
                                      void* context) {
-  const int BUF_LEN = 32;
+  const int BUF_LEN = 64;
   char buf[BUF_LEN];
 
   int length = readContentLength();
@@ -350,6 +350,7 @@ int M2XStreamClient::readStreamValue(stream_value_read_callback callback,
 
   jsonlite_parser_callbacks cbs = jsonlite_default_callbacks;
   cbs.key_found = on_stream_key_found;
+  cbs.number_found = on_stream_number_found;
   cbs.string_found = on_stream_string_found;
   cbs.context.client_state = &state;
 
