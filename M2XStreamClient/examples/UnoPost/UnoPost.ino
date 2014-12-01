@@ -56,7 +56,7 @@ void loop() {
   Serial.print("  deg F: ");
   Serial.println(degreesF);
 
-  int response = m2xClient.put(feedId, streamName, degreesC);
+  int response = m2xClient.updateStreamValue(feedId, streamName, degreesC);
   Serial.print("M2x client response code: ");
   Serial.println(response);
 

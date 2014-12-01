@@ -44,7 +44,7 @@ void loop() {
 
     // if the user presses 'T', post the temperature to m2x
     if (incomingByte == 'T') {
-      int response = m2xClient.fetchValues(feedId, streamName, on_data_point_found, NULL);
+      int response = m2xClient.listStreamValues(feedId, streamName, on_data_point_found, NULL);
       Console.print("M2x client response code: ");
       Console.println(response);
     }

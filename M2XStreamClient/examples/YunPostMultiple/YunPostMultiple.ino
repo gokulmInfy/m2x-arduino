@@ -40,8 +40,8 @@ void loop() {
 
     // if the user presses 'T', push the data to m2x
     if (incomingByte == 'T') {
-      int response = m2xClient.postMultiple(feedId, 2, streamNames,
-                                            counts, ats, values);
+      int response = m2xClient.postDeviceUpdates(feedId, 2, streamNames,
+                                                 counts, ats, values);
       Console.print("M2x client response code: ");
       Console.println(response);
     }

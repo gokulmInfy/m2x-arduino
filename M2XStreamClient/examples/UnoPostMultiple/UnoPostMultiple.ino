@@ -47,8 +47,8 @@ void setup() {
 }
 
 void loop() {
-  int response = m2xClient.postMultiple(feedId, 2, streamNames,
-                                        counts, ats, values);
+  int response = m2xClient.postDeviceUpdates(feedId, 2, streamNames,
+                                             counts, ats, values);
   Serial.print("M2x client response code: ");
   Serial.println(response);
 
