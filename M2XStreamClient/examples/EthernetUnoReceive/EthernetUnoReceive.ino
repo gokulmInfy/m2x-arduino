@@ -47,7 +47,6 @@ void setup() {
   delay(10000);
 
   Serial.println("Connected to Ethernet");
-  printEthernetStatus();
 }
 
 void loop() {
@@ -58,22 +57,4 @@ void loop() {
   if (response == -1) while(1) ;
 
   delay(5000);
-}
-
-void printEthernetStatus() {
-  // print local IP
-  Serial.print("Local IP: ");
-  Serial.println(Ethernet.localIP());
-
-  // print subnet mask
-  Serial.print("Subnet Mask: ");
-  Serial.println(Ethernet.subnetMask());
-
-  // print gateway IP
-  Serial.print("Gateway IP: ");
-  Serial.println(Ethernet.gatewayIP());
-
-  // print dns IP
-  Serial.print("DNS IP: ");
-  Serial.println(Ethernet.dnsServerIP());
 }
