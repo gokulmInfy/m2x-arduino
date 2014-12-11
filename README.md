@@ -24,7 +24,7 @@ This library depends on [jsonlite](https://github.com/citrusbyte/jsonlite), the 
 
 1. Clone the [jsonlite](https://github.com/citrusbyte/jsonlite) repository.
 
-   **NOTE**: Since we are now using the old v1.1.2 API (we will migrate to the new API soon), please use the fork version of jsonlite listed above instead of the original one.
+   **NOTE**: Since we are now using the old v1.1.2 API (we will migrate to the new API soon), please use the forked version of jsonlite listed above instead of the original one.
 
 2. Open the Arduino IDE, click `Sketch->Import Library...->Add Library...`, then navigate to `amalgamated/jsonlite` folder in the cloned jsonlite repository. The jsonlite library will be imported to Arduino this way.
 
@@ -107,7 +107,7 @@ char m2xKey[] = "<M2X access key>";
 Device ID
 -------
 
-A device is associated with a data source. It is a set of data streams, such as streams of locations, temperatures, etc. The following line is needed to configure the device used:
+A device is a source of data (it could be a physical device, a virtual device, a service, or an application). It is a set of data streams, such as streams of locations, temperatures, etc. The following line is needed to configure the device used:
 
 ```
 char deviceId[] = "<device id>";
@@ -116,7 +116,7 @@ char deviceId[] = "<device id>";
 Stream Name
 ------------
 
-A stream in a device is a set of timed series data of a specific type (i,e. humidity, temperature). You can use the M2XStreamClient library to send stream values to M2X server, or receive stream values from M2X server. Use the following line to configure the stream if needed:
+A stream in a device is a set of times series data of a specific type (i,e. humidity, temperature). You can use the M2XStreamClient library to send stream values to M2X server, or receive stream values from M2X server. Use the following line to configure the stream if needed:
 
 ```
 char streamName[] = "<stream name>";
