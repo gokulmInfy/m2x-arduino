@@ -133,8 +133,8 @@ int print_encoded_string(Print* print, const char* str) {
     } else {
       // Encode all other characters
       bytes += print->print('%');
-      bytes += print->print(HEX(str[i] / 16));
-      bytes += print->print(HEX(str[i] % 16));
+      bytes += print->print(TO_HEX(str[i] / 16));
+      bytes += print->print(TO_HEX(str[i] % 16));
     }
   }
   return bytes;

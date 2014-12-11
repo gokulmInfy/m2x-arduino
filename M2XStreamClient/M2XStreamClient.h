@@ -38,7 +38,7 @@
 #define DBGLNEND
 #endif  // DEBUG
 
-#define HEX(t_) ((char) (((t_) > 9) ? ((t_) - 10 + 'A') : ((t_) + '0')))
+#define TO_HEX(t_) ((char) (((t_) > 9) ? ((t_) - 10 + 'A') : ((t_) + '0')))
 #define MAX_DOUBLE_DIGITS 7
 
 static const int E_OK = 0;
