@@ -4,7 +4,7 @@
 
 #include "M2XStreamClient.h"
 
-char feedId[] = "<feed id>"; // Feed you want to read locations from
+char deviceId[] = "<device id>"; // Device you want to read locations from
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
 char incomingByte;      // a variable to read incoming Console data into
@@ -52,7 +52,7 @@ void loop() {
 
     // if the user presses 'T', reads the location
     if (incomingByte == 'T') {
-      int response = m2xClient.readLocation(feedId, on_location_found, NULL);
+      int response = m2xClient.readLocation(deviceId, on_location_found, NULL);
       Console.print("M2x client response code: ");
       Console.println(response);
     }

@@ -4,7 +4,7 @@
 
 #include "M2XStreamClient.h"
 
-char feedId[] = "<feed id>"; // Feed you want to fetch values from
+char deviceId[] = "<device id>"; // Device you want to fetch values from
 char streamName[] = "<stream name>"; // Stream you want to fetch values from
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
@@ -44,7 +44,7 @@ void loop() {
 
     // if the user presses 'T', post the temperature to m2x
     if (incomingByte == 'T') {
-      int response = m2xClient.listStreamValues(feedId, streamName, on_data_point_found, NULL);
+      int response = m2xClient.listStreamValues(deviceId, streamName, on_data_point_found, NULL);
       Console.print("M2x client response code: ");
       Console.println(response);
     }

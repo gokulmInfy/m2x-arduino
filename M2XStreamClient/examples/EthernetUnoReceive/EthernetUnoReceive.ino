@@ -10,7 +10,7 @@ byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 // Set the static IP address to use if the DHCP fails to assign
 IPAddress ip(192,168,1,17);
 
-char feedId[] = "<feed id>"; // Feed you want to receive values
+char deviceId[] = "<device id>"; // Device you want to receive values
 char streamName[] = "<stream name>"; // Stream you want to receive values
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
@@ -50,7 +50,7 @@ void setup() {
 }
 
 void loop() {
-  int response = m2xClient.listStreamValues(feedId, streamName, on_data_point_found, NULL);
+  int response = m2xClient.listStreamValues(deviceId, streamName, on_data_point_found, NULL);
   Serial.print("M2x client response code: ");
   Serial.println(response);
 

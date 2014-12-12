@@ -4,7 +4,7 @@
 
 #include "M2XStreamClient.h"
 
-char feedId[] = "<feed id>"; // Feed you want to push to
+char deviceId[] = "<device id>"; // Device you want to push to
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
 char incomingByte;      // a variable to read incoming Console data into
@@ -40,7 +40,7 @@ void loop() {
 
     // if the user presses 'T', push the data to m2x
     if (incomingByte == 'T') {
-      int response = m2xClient.postDeviceUpdates(feedId, 2, streamNames,
+      int response = m2xClient.postDeviceUpdates(deviceId, 2, streamNames,
                                                  counts, ats, values);
       Console.print("M2x client response code: ");
       Console.println(response);

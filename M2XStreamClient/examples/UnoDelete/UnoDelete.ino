@@ -10,7 +10,7 @@ int keyIndex = 0;            // your network key Index number (needed only for W
 
 int status = WL_IDLE_STATUS;
 
-char feedId[] = "<feed id>"; // Feed you want to post to
+char deviceId[] = "<device id>"; // Device you want to post to
 char streamName[] = "<stream name>"; // Stream you want to post to
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
@@ -42,14 +42,14 @@ void setup() {
   }
   Serial.println("Connected to wifi");
   printWifiStatus();
-  
+
   // Delete values
-  int response = m2xClient.deleteValues(feedId, 
+  int response = m2xClient.deleteValues(deviceId,
                                         streamName,
                                         fromTime,
                                         endTime);
   Serial.print("M2x client response code: ");
-  Serial.println(response);   
+  Serial.println(response);
 }
 
 void loop() {

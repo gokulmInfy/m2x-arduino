@@ -10,7 +10,7 @@ int keyIndex = 0;            // your network key Index number (needed only for W
 
 int status = WL_IDLE_STATUS;
 
-char feedId[] = "<feed id>"; // Feed you want to read
+char deviceId[] = "<device id>"; // Device you want to read
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
 WiFiClient client;
@@ -62,7 +62,7 @@ void setup() {
 }
 
 void loop() {
-  int response = m2xClient.readLocation(feedId, on_location_found, NULL);
+  int response = m2xClient.readLocation(deviceId, on_location_found, NULL);
   Serial.print("M2x client response code: ");
   Serial.println(response);
 

@@ -4,7 +4,7 @@
 
 #include "M2XStreamClient.h"
 
-char feedId[] = "<feed id>"; // Feed you want to push to
+char deviceId[] = "<device id>"; // Device you want to push to
 char streamName[] = "<stream name>"; // Stream you want to push to
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
@@ -54,7 +54,7 @@ void loop() {
       float temperature = (voltage - .5) * 100;
       Console.println(temperature);
 
-      int response = m2xClient.updateStreamValue(feedId, streamName, temperature);
+      int response = m2xClient.updateStreamValue(deviceId, streamName, temperature);
       Console.print("M2x client response code: ");
       Console.println(response);
     }

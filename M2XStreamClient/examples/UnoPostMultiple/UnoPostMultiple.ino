@@ -9,7 +9,7 @@ char pass[] = "<WPA password>";    // your network password (use for WPA, or use
 
 int status = WL_IDLE_STATUS;
 
-char feedId[] = "<feed id>"; // Feed you want to push to
+char deviceId[] = "<device id>"; // Device you want to push to
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
 const char *streamNames[] = { "temperature", "humidity" };
@@ -47,7 +47,7 @@ void setup() {
 }
 
 void loop() {
-  int response = m2xClient.postDeviceUpdates(feedId, 2, streamNames,
+  int response = m2xClient.postDeviceUpdates(deviceId, 2, streamNames,
                                              counts, ats, values);
   Serial.print("M2x client response code: ");
   Serial.println(response);

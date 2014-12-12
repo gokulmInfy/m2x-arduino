@@ -4,7 +4,7 @@
 
 #include "M2XStreamClient.h"
 
-char feedId[] = "<feed id>"; // Feed you want to update
+char deviceId[] = "<device id>"; // Device you want to update
 char m2xKey[] = "<M2X access key>"; // Your M2X access key
 
 char incomingByte;      // a variable to read incoming Console data into
@@ -37,7 +37,7 @@ void loop() {
 
     // if the user presses 'T', push the location to m2x
     if (incomingByte == 'T') {
-      int response = m2xClient.updateLocation(feedId, name, latitude,
+      int response = m2xClient.updateLocation(deviceId, name, latitude,
                                               longitude, elevation);
       Console.print("M2x client response code: ");
       Console.println(response);
