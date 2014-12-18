@@ -359,25 +359,25 @@ This example works like `UnoUpdateLocation`, except that it works on an [Arduino
 LinkIt One Support
 ==================
 
-This library is also compatible with the [LinkIt One board](http://www.seeedstudio.com/depot/LinkIt-ONE-p-2017.html), examples start with `LinkIt` are written specifically for the LinkIt One board. To use the library on LinkIt One board, specific Wifi client is needed:
+This library is also compatible with the [LinkIt One board](http://www.seeedstudio.com/depot/LinkIt-ONE-p-2017.html). LinkIt One examples start with `LinkIt` and are written specifically for the LinkIt One board. To use this library on the LinkIt One board, a specific Wifi client is needed:
 
 ```
 LWifiClient client;
 M2XStreamClient m2xClient(&client, m2xKey);
 ```
 
-The steps used to run the examples also differ a little bit from an Arduino board, which are listed below:
+The steps used to run the examples also differ from a standard Arduino board, and are listed below:
 
-* Follow the Quick Start Guide at [here](http://www.seeedstudio.com/wiki/LinkIt_ONE#Quick_Start_Guide) to setup the environment for the board. Keep a note of the 2 COM ports used, we will use both of them later
+* Follow the [Quick Start Guide](http://www.seeedstudio.com/wiki/LinkIt_ONE#Quick_Start_Guide) to setup the environment for the board. Keep a note of the 2 COM ports used as we will use both of them later.
 * Follow the `How to Install the library` section above to install the libraries needed.
-* Open an example for LinkIt One board, configure the variables including M2X key, Device ID, Stream Name, values, etc.
+* Open an example for LinkIt One board, configure the variables, including M2X key, Device ID, Stream Name, values, etc.
 * From the Arduino IDE menu, click on _Tools_, _Board_, then select `LinkIt ONE` as the board to use.
 * Also from the Arduino IDE menu, click on _Tools_, _Port_, then select the COM port which is marked as Debug Port in Step 1.
 * Click _Upload_ to build and upload the examples.
 * From the Arduino IDE menu, click on _Tools_, _Port_ then select the COM port which is marked as Modem Port in Step 1.
-* Open the _Serial Monitor_, type anything in the input line above, then hit `Send`. The program is configured to start running only at this point, since you might miss the Serial outputs otherwise.
+* Open the _Serial Monitor_, type anything in the input line above, then hit `Send`. The program is configured to start running only at this point, because you might otherwise miss the Serial outputs.
 
-*NOTE*: right now the development of LinkIt One board is only supported on Microsoft Windows XP, Vista and 7. And it is strongly recommended that you use a 32-bit version instead of 64-bit version for maximum compatibility.
+*NOTE*: Currently LinkIt One board development is only supported on Microsoft Windows XP, Windows Vista and Windows 7. It is strongly recommended that you use a 32-bit version instead of a 64-bit version for maximum compatibility.
 
 LICENSE
 =======
