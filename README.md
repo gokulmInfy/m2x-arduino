@@ -11,7 +11,7 @@ Getting Started
 ==========================
 1. Signup for an [M2X Account](https://m2x.att.com/signup).
 2. Obtain your _Master Key_ from the Master Keys tab of your [Account Settings](https://m2x.att.com/account) screen.
-3. Create your first [Data Source Blueprint](https://m2x.att.com/blueprints) and copy its _Device ID_.
+3. Create your first [Device](https://m2x.att.com/devices) and copy its _Device ID_.
 4. Review the [M2X API Documentation](https://m2x.att.com/developer/documentation/overview).
 5. Obtain an Arduino with built-in wifi or ethernet, or a separate wifi or ethernet shield and [set it up](http://arduino.cc/en/Guide/HomePage). These docs were written for an [__Arduino Uno__](http://arduino.cc/en/Main/arduinoBoardUno) with a wifi or ethernet shield but the instructions can be adapted for other Arduino models.
 
@@ -96,7 +96,7 @@ M2X API Key
 
 Once you [register](https://m2x.att.com/signup) for an AT&amp;T M2X account, an API key is automatically generated for you. This key is called a _Primary Master Key_ and can be found in the _Master Keys_ tab of your [Account Settings](https://m2x.att.com/account). This key cannot be edited or deleted, but it can be regenerated. It will give you full access to all APIs.
 
-However, you can also create a _Data Source API Key_ associated with a given Data Source (Device), you can use the Data Source API key to access the streams belonging to that Data Source.
+However, you can also create a _Device API Key_ associated with a given Device, you can use the Device API key to access the streams belonging to that Device.
 
 You can customize this variable in the following line in the examples:
 
@@ -227,10 +227,10 @@ Besides the device ID and stream name, only the callback function and a user con
 start=2014-10-01T00:00:00Z&end=2014-10-10T00:00:00Z
 ```
 
-Update Datasource Location
+Update Device Location
 --------------------------
 
-You can use the following function to update the location for a data source(device):
+You can use the following function to update the location for a device:
 
 ```
 template <class T>
@@ -240,7 +240,7 @@ int updateLocation(const char* deviceId, const char* name,
 
 Different from stream values, locations are attached to devices rather than streams. We use templates here, since the values may be in different format, for example, you can express latitudes in both `double` and `const char*`.
 
-Read Datasource Location
+Read Device Location
 ------------------------
 
 Similar to reading stream values, we also use callback functions here. The only difference is that different parameters are used in the function:
