@@ -22,19 +22,24 @@ How to Install the library
 
 This library depends on [jsonlite](https://github.com/citrusbyte/jsonlite), the installation steps are as follows:
 
-1. Clone the [jsonlite](https://github.com/citrusbyte/jsonlite) repository.
+1. Clone the repository and sync submodules:
 
-   **NOTE**: Since we are now using the old v1.1.2 API (we will migrate to the new API soon), please use the forked version of jsonlite listed above instead of the original one.
+   ```
+   $ git clone https://github.com/attm2x/m2x-arduino
+   $ git submodule update --init
+   ```
 
-2. Open the Arduino IDE, click `Sketch->Import Library...->Add Library...`, then navigate to `amalgamated/jsonlite` folder in the cloned jsonlite repository. The jsonlite library will be imported to Arduino this way.
+   **NOTE**: You might notice that we add jsonlite as a submodule, this is due to the fact that we are still using an older version of jsonlite now. We might remove this restriction once we migrate to latest version.
 
-   **NOTE**: If you cloned the jsonlite library, there will be three (3) folders named jsonlite:
-   * `jsonlite`: the repo folder
-   * `jsonlite/jsonlite`: the un-flattened jsonlite source folder
-   * `jsonlite/amalgamated/jsonlite`: the flattened jsonlite source for arduino
+2. Open the Arduino IDE, click `Sketch->Import Library...->Add Library...`, then navigate to `vendor/jsonlite/amalgamated/jsonlite` folder in the repository. The jsonlite library will be imported to Arduino this way.
+
+   **NOTE**: There will be three (3) folders named jsonlite:
+   * `vendor/jsonlite`: the repo folder
+   * `vendor/jsonlite/jsonlite`: the un-flattened jsonlite source folder
+   * `vendor/jsonlite/amalgamated/jsonlite`: the flattened jsonlite source for arduino
 
    You should use the final library listed here as the first two won't work!
-3. Use the instructions outlined in Step 2 above to import the `M2XStreamClient` library in the current folder.
+3. Use the instructions outlined in Step 2 above to import the `M2XStreamClient` library in the repository.
 4. Now you can find M2X examples under `File->Examples->M2XStreamClient`
 
 Hardware Setup
