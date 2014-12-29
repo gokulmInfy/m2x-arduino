@@ -1,0 +1,3 @@
+[submodule "vendor/jsonlite"]
+	path = vendor/jsonlite
+	url = https://github.com/amamchur/jsonlite
