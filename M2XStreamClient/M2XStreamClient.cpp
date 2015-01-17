@@ -27,10 +27,12 @@ int tolower(int ch)
 
 M2XStreamClient::M2XStreamClient(Client* client,
                                  const char* key,
+                                 void (* idlefunc)(void),
                                  int case_insensitive,
                                  const char* host,
                                  int port) : _client(client),
                                              _key(key),
+                                             _idlefunc(idlefunc),
                                              _case_insensitive(case_insensitive),
                                              _host(host),
                                              _port(port),
@@ -223,8 +225,10 @@ int M2XStreamClient::waitForString(const char* str) {
       close();
       return E_DISCONNECTED;
     }
-
-    delay(1000);
+    if (_idlefunc!=NULL)
+      _idlefunc();
+    else
+      delay(200);
   }
   // never reached here
   return E_NOTREACHABLE;
@@ -260,8 +264,10 @@ int M2XStreamClient::readStatusCode(bool closeClient) {
       if (closeClient) close();
       return E_DISCONNECTED;
     }
-
-    delay(1000);
+    if (_idlefunc!=NULL)
+      _idlefunc();
+    else
+      delay(200);
   }
 
   // never reached here
@@ -294,8 +300,10 @@ int M2XStreamClient::readContentLength() {
 
       return E_DISCONNECTED;
     }
-
-    delay(1000);
+    if (_idlefunc!=NULL)
+      _idlefunc();
+    else
+      delay(200);
   }
 
   // never reached here
