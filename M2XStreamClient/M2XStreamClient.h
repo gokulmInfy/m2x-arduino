@@ -76,6 +76,7 @@ public:
 
   M2XStreamClient(Client* client,
                   const char* key,
+                  void (* idlefunc)(void) = NULL,
                   int case_insensitive = 1,
                   const char* host = kDefaultM2XHost,
                   int port = kDefaultM2XPort);
@@ -169,6 +170,7 @@ private:
   int _case_insensitive;
   const char* _host;
   int _port;
+  void (* _idlefunc)(void);
   NullPrint _null_print;
 
   // Writes the HTTP header part for updating a stream value
