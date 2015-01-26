@@ -12,10 +12,10 @@ Getting Started
 1. Signup for an [M2X Account](https://m2x.att.com/signup).
 2. Obtain your _Master Key_ from the Master Keys tab of your [Account Settings](https://m2x.att.com/account) screen.
 3. Create your first [Device](https://m2x.att.com/devices) and copy its _Device ID_.
-4. Review the [M2X API Documentation](https://m2x.att.com/developer/documentation/overview).
+4. Review the [M2X API Documentation](https://m2x.att.com/developer/documentation/v2/overview).
 5. Obtain an Arduino with built-in wifi or ethernet, or a separate wifi or ethernet shield and [set it up](http://arduino.cc/en/Guide/HomePage). These docs were written for an [__Arduino Uno__](http://arduino.cc/en/Main/arduinoBoardUno) with a wifi or ethernet shield but the instructions can be adapted for other Arduino models.
 
-Please consult the [M2X glossary](https://m2x.att.com/developer/documentation/glossary) if you have questions about any M2X specific terms.
+Please consult the [M2X glossary](https://m2x.att.com/developer/documentation/v2/glossary) if you have questions about any M2X specific terms.
 
 How to Install the library
 ==========================
