@@ -3,19 +3,25 @@
 
 #define MIN(a, b) (((a) > (b))?(b):(a))
 
-#define ARDUINO_PLATFORM
-
-#ifdef ARDUINO_PLATFORM
+#if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
+#define ARDUINO_PLATFORM
+#elif defined(__MBED__)
+#include "mbed.h"
+#define MBED_PLATFORM
+#endif
 
+// User-Agent defines
+#ifdef ARDUINO_PLATFORM
+#if defined(PLATFORM_ID) && PLATFORM_ID == 0xE1
+#define USER_AGENT "User-Agent: M2X Intel Edison Client/2.0.0"
+#else
 #define USER_AGENT "User-Agent: M2X Arduino Client/2.0.0"
 #endif
-
-#ifdef MBED_PLATFORM
-#include "mbed.h"
-
+#elif defined(MBED_PLATFORM)
 #define USER_AGENT "User-Agent: M2X Mbed Client/2.0.0"
-#endif
+#endif // ARDUINO_PLATFORM
+
 
 #include "Client.h"
 #include "NullPrint.h"
