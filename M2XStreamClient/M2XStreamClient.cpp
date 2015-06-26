@@ -311,7 +311,7 @@ int M2XStreamClient::readContentLength() {
 }
 
 int M2XStreamClient::skipHttpHeader() {
-  return waitForString("\r\n\r\n");
+  return waitForString("\n\r\n");
 }
 
 void M2XStreamClient::close() {
