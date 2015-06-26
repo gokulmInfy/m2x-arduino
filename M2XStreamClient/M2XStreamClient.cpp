@@ -165,7 +165,6 @@ int M2XStreamClient::getTimestamp(char* buffer, int *bufferLength) {
       DBGLNEND;
 
       if ((!_client->connected()) &&
-          (!_client->available()) &&
           (index < length)) {
         close();
         return E_NOCONNECTION;
