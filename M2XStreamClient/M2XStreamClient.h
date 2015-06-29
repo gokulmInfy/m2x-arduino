@@ -48,9 +48,10 @@ static const int E_NOTREACHABLE = -3;
 static const int E_INVALID = -4;
 static const int E_JSON_INVALID = -5;
 static const int E_BUFFER_TOO_SMALL = -6;
+static const int E_TIMESTAMP_ERROR = -8;
 
 static inline bool m2x_status_is_success(int status) {
-  return status >= 200 && status <= 299;
+  return (status == E_OK) || (status >= 200 && status <= 299);
 }
 
 static inline bool m2x_status_is_client_error(int status) {
@@ -276,5 +277,6 @@ private:
 };
 
 #include "M2XStreamClient_template.h"
+#include "TimeService.h"
 
 #endif  /* M2XStreamClient_h */

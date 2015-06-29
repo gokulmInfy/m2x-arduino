@@ -341,6 +341,11 @@ YunPost
 
 This example works like `UnoPost`, except that it works on an [Arduino Yun](http://arduino.cc/en/Main/ArduinoBoardYun) board instead of an [Arduino Uno](http://arduino.cc/en/Main/arduinoBoardUno) board.
 
+YunTime
+-------
+
+This example works like `YunPost`, except that it uses M2X Time API with the TimeService provided to generate timestamps for the posted data.
+
 YunPostMultiple
 ---------------
 
