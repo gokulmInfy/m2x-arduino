@@ -113,9 +113,9 @@ static int fill_iso8601_timestamp(int32_t timestamp, int32_t milli,
     buffer[i + (width_) - 1 - j] = '0' + ((v_) % 10); \
     (v_) /= 10; \
   } \
-  i += (width_);
+  i += (width_)
 
-  INT_TO_STR(year, 4)
+  INT_TO_STR(year, 4);
   buffer[i++] = '-';
   INT_TO_STR(month, 2);
   buffer[i++] = '-';
