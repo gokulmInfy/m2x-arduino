@@ -176,7 +176,10 @@ public:
   // or the error code(negative values).
   // In case of success, the current timestamp will be filled in the
   // +ts+ pointer passed in as argument.
-  int getTimestamp32(long* ts);
+  //
+  // NOTE: although returning uint32_t can give us a larger space,
+  // we prefer to cope with the unix convention here.
+  int getTimestamp32(int32_t* ts);
 
   // Fetches current timestamp in seconds from M2X server.
   // This function will return the timestamp as an integer literal

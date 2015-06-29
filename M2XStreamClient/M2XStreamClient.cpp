@@ -110,7 +110,7 @@ int M2XStreamClient::deleteValues(const char* deviceId, const char* streamName,
   return readStatusCode(true);
 }
 
-int M2XStreamClient::getTimestamp32(long *ts) {
+int M2XStreamClient::getTimestamp32(int32_t *ts) {
   // The maximum value of signed 64-bit integer is 0x7fffffffffffffff,
   // which is 9223372036854775807. It consists of 19 characters, so a
   // buffer of 20 is definitely enough here
@@ -118,7 +118,7 @@ int M2XStreamClient::getTimestamp32(long *ts) {
   char buffer[20];
   int status = getTimestamp(buffer, &length);
   if (status == 200) {
-    long result = 0;
+    int32_t result = 0;
     for (int i = 0; i < length; i++) {
       result = result * 10 + (buffer[i] - '0');
     }
