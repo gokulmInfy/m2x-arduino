@@ -49,6 +49,23 @@ static const int E_INVALID = -4;
 static const int E_JSON_INVALID = -5;
 static const int E_BUFFER_TOO_SMALL = -6;
 
+static inline bool m2x_status_is_success(int status) {
+  return status >= 200 && status <= 299;
+}
+
+static inline bool m2x_status_is_client_error(int status) {
+  return status >= 400 && status <= 499;
+}
+
+static inline bool m2x_status_is_server_error(int status) {
+  return status >= 500 && status <= 599;
+}
+
+static inline bool m2x_status_is_error(int status) {
+  return m2x_status_is_client_error(status) ||
+      m2x_status_is_server_error(status);
+}
+
 /*
  * +type+ indicates the value type: 1 for string, 2 for number
  * NOTE that the value type here only contains a hint on how
