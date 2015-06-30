@@ -301,6 +301,11 @@ UnoPost
 
 This example shows how to post temperatures to M2X. Before running this example, you will need to have a valid M2X Key, a device ID and a stream name. The Arduino board needs to be configured like [this](http://cl.ly/image/3M0P3T1A0G0l). In this example, we are using an [Arduino Uno](http://arduino.cc/en/Main/arduinoBoardUno) board. If you are using other boards, keep in mind that we are reading from `A0` in the code and the wiring should be similar to this one shown in the illustration.
 
+UnoTime
+-------
+
+This example works like `UnoPost`, except that it uses M2X Time API with the TimeService provided to generate timestamps for the posted data.
+
 UnoPostMultiple
 ---------------
 
@@ -330,6 +335,11 @@ EthernetUnoPost
 ---------------
 
 This example is similar to the `UnoPost`, except that EthernetClient is used instead of WifiClient. If you are using an Ethernet Shield instead of a Wifi Shield, you can use this example.
+
+EthernetUnoTime
+---------------
+
+This example works like `EthernetUnoPost`, except that it uses M2X Time API with the TimeService provided to generate timestamps for the posted data.
 
 EthernetUnoReceive
 ------------------
