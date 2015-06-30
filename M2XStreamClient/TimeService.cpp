@@ -129,6 +129,7 @@ static int fill_iso8601_timestamp(int32_t timestamp, int32_t milli,
   buffer[i++] = '.';
   INT_TO_STR(milli, 3);
   buffer[i++] = 'Z';
+  buffer[i++] = '\0';
 
 #undef INT_TO_STR
 
