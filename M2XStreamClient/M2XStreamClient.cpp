@@ -1,10 +1,5 @@
 #include "M2XStreamClient.h"
 
-#include <jsonlite.h>
-
-#include "StreamParseFunctions.h"
-#include "LocationParseFunctions.h"
-
 const char* M2XStreamClient::kDefaultM2XHost = "api-m2x.att.com";
 
 static int write_delete_values(Print* print, const char* from, const char* end);
@@ -37,62 +32,6 @@ M2XStreamClient::M2XStreamClient(Client* client,
                                              _host(host),
                                              _port(port),
                                              _null_print() {
-}
-
-int M2XStreamClient::listStreamValues(const char* deviceId, const char* streamName,
-                                      stream_value_read_callback callback, void* context,
-                                      const char* query) {
-  if (_client->connect(_host, _port)) {
-    DBGLN("%s", "Connected to M2X server!");
-    _client->print("GET /v2/devices/");
-    print_encoded_string(_client, deviceId);
-    _client->print("/streams/");
-    print_encoded_string(_client, streamName);
-    _client->print("/values");
-
-    if (query) {
-      if (query[0] != '?') {
-        _client->print('?');
-      }
-      _client->print(query);
-    }
-
-    _client->println(" HTTP/1.0");
-    writeHttpHeader(-1);
-  } else {
-    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
-    return E_NOCONNECTION;
-  }
-  int status = readStatusCode(false);
-  if (status == 200) {
-    readStreamValue(callback, context);
-  }
-
-  close();
-  return status;
-}
-
-int M2XStreamClient::readLocation(const char* deviceId,
-                                  location_read_callback callback,
-                                  void* context) {
-  if (_client->connect(_host, _port)) {
-    DBGLN("%s", "Connected to M2X server!");
-    _client->print("GET /v2/devices/");
-    print_encoded_string(_client, deviceId);
-    _client->println("/location HTTP/1.0");
-
-    writeHttpHeader(-1);
-  } else {
-    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
-    return E_NOCONNECTION;
-  }
-  int status = readStatusCode(false);
-  if (status == 200) {
-    readLocation(callback, context);
-  }
-
-  close();
-  return status;
 }
 
 int M2XStreamClient::deleteValues(const char* deviceId, const char* streamName,
@@ -391,6 +330,68 @@ void M2XStreamClient::close() {
   _client->stop();
 }
 
+#ifdef M2X_ENABLE_READER
+#include <jsonlite.h>
+
+#include "StreamParseFunctions.h"
+#include "LocationParseFunctions.h"
+
+int M2XStreamClient::listStreamValues(const char* deviceId, const char* streamName,
+                                      stream_value_read_callback callback, void* context,
+                                      const char* query) {
+  if (_client->connect(_host, _port)) {
+    DBGLN("%s", "Connected to M2X server!");
+    _client->print("GET /v2/devices/");
+    print_encoded_string(_client, deviceId);
+    _client->print("/streams/");
+    print_encoded_string(_client, streamName);
+    _client->print("/values");
+
+    if (query) {
+      if (query[0] != '?') {
+        _client->print('?');
+      }
+      _client->print(query);
+    }
+
+    _client->println(" HTTP/1.0");
+    writeHttpHeader(-1);
+  } else {
+    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
+    return E_NOCONNECTION;
+  }
+  int status = readStatusCode(false);
+  if (status == 200) {
+    readStreamValue(callback, context);
+  }
+
+  close();
+  return status;
+}
+
+int M2XStreamClient::readLocation(const char* deviceId,
+                                  location_read_callback callback,
+                                  void* context) {
+  if (_client->connect(_host, _port)) {
+    DBGLN("%s", "Connected to M2X server!");
+    _client->print("GET /v2/devices/");
+    print_encoded_string(_client, deviceId);
+    _client->println("/location HTTP/1.0");
+
+    writeHttpHeader(-1);
+  } else {
+    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
+    return E_NOCONNECTION;
+  }
+  int status = readStatusCode(false);
+  if (status == 200) {
+    readLocation(callback, context);
+  }
+
+  close();
+  return status;
+}
+
 int M2XStreamClient::readStreamValue(stream_value_read_callback callback,
                                      void* context) {
   const int BUF_LEN = 64;
@@ -523,3 +524,4 @@ int M2XStreamClient::readLocation(location_read_callback callback,
   close();
   return (result == jsonlite_result_ok) ? (E_OK) : (E_JSON_INVALID);
 }
+#endif  /* M2X_ENABLE_READER */

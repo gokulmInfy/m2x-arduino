@@ -4,6 +4,7 @@
 #define MIN(a, b) (((a) > (b))?(b):(a))
 
 #define ARDUINO_PLATFORM
+#define M2X_ENABLE_READER
 
 #ifdef ARDUINO_PLATFORM
 #include "Arduino.h"
@@ -67,6 +68,7 @@ static inline bool m2x_status_is_error(int status) {
       m2x_status_is_server_error(status);
 }
 
+#ifdef M2X_ENABLE_READER
 /*
  * +type+ indicates the value type: 1 for string, 2 for number
  * NOTE that the value type here only contains a hint on how
@@ -87,6 +89,7 @@ typedef void (*location_read_callback)(const char* name,
                                        const char* timestamp,
                                        int index,
                                        void* context);
+#endif  /* M2X_ENABLE_READER */
 
 class M2XStreamClient {
 public:
@@ -127,6 +130,7 @@ public:
                         const char* names[], const int counts[],
                         const char* ats[], T values[]);
 
+#ifdef M2X_ENABLE_READER
   // Fetch values for a particular data stream. Since memory is
   // very limited on an Arduino, we cannot parse and get all the
   // data points in memory. Instead, we use callbacks here: whenever
@@ -142,6 +146,7 @@ public:
   int listStreamValues(const char* deviceId, const char* streamName,
                        stream_value_read_callback callback, void* context,
                        const char* query = NULL);
+#endif  /* M2X_ENABLE_READER */
 
   // Update datasource location
   // NOTE: On an Arduino Uno and other ATMEGA based boards, double has
@@ -161,11 +166,13 @@ public:
   int updateLocation(const char* deviceId, const char* name,
                      T latitude, T longitude, T elevation);
 
+#ifdef M2X_ENABLE_READER
   // Read location information for a device. Also used callback to process
   // data points for memory reasons. The HTTP status code is returned,
   // response is only parsed when the HTTP status code is 200
   int readLocation(const char* deviceId, location_read_callback callback,
                    void* context);
+#endif  /* M2X_ENABLE_READER */
 
   // Delete values from a data stream
   // You will need to provide from and end date/time strings in the ISO8601
@@ -268,12 +275,15 @@ private:
   int waitForString(const char* str);
   // Closes the connection
   void close();
+
+#ifdef M2X_ENABLE_READER
   // Parses JSON response of stream value API, and calls callback function
   // once we get a data point
   int readStreamValue(stream_value_read_callback callback, void* context);
   // Parses JSON response of location API, and calls callback function once
   // we get a data point
   int readLocation(location_read_callback callback, void* context);
+#endif  /* M2X_ENABLE_READER */
 };
 
 #include "M2XStreamClient_template.h"
