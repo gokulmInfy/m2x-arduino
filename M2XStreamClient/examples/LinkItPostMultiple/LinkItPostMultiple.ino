@@ -2,6 +2,7 @@
 #include <LWiFi.h>
 #include <LWiFiClient.h>
 
+#define ARDUINO_PLATFORM
 #include "M2XStreamClient.h"
 
 char ssid[] = "<ssid>"; //  your network SSID (name)

@@ -2,6 +2,7 @@
 #include <Console.h>
 #include <YunClient.h>
 
+#define ARDUINO_PLATFORM
 #include "M2XStreamClient.h"
 
 char deviceId[] = "<device id>"; // Device you want to update

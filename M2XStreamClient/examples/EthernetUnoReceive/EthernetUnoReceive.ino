@@ -2,6 +2,9 @@
 #include <SPI.h>
 #include <Ethernet.h>
 
+#define ARDUINO_PLATFORM
+#define M2X_ENABLE_READER
+#include <jsonlite.h>
 #include "M2XStreamClient.h"
 
 // Enter a MAC address for your controller below.
