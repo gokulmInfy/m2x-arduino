@@ -1,11 +1,18 @@
 Arduino M2X API Client
 =====================
 
-**NOTE**: We've [changed](https://github.com/attm2x/m2x-arduino/commit/ca3a5484b371f011a30a523465b9aa517d61db25) one API to avoid ambiguity, if you are using the older version of client library, you might need to fix your code.
+**NOTE**: As of version 2.2.0, we have change the library to header-only implementation. To read more about the reason behind this change, please check out [RATIONALE](./RATIONALE.md) file.
 
 The Arduino library is used to send/receive data to/from [AT&amp;T's M2X service](https://m2x.att.com/) from [Arduino](http://www.arduino.cc/) based devices.
 
-**NOTE**: Unless stated otherwise, the following instructions are specific to [Arduino Uno](http://arduino.cc/en/Main/arduinoBoardUno) boards. If you are using other boards, the exact steps may vary.
+This library has been tested on the following embedded boards:
+
+* Arduino Uno
+* Arduino Yun
+* LinkIt One
+* ESP8266
+
+If you are using other boards, your mileage may very.
 
 Getting Started
 ==========================
@@ -54,9 +61,9 @@ The Arduino website has a very good [tutorial](http://arduino.cc/en/Guide/HomePa
 Wifi/Ethernet Shield Setup
 --------------------------
 
-If you are using an [Arduino Yun](http://arduino.cc/en/Main/ArduinoBoardYun) board instead of an [Arduino Uno](http://arduino.cc/en/Main/ArduinoBoardUno) board, you can skip this section since the Yun board already has a Wifi adapter onboard.
+To send data to the AT&amp;T M2X service, or receive data from the AT&amp;T M2X service, your Arduino board needs a connection to the Internet. Hence, an Arduino [Wifi Shield](http://arduino.cc/en/Main/ArduinoWiFiShield) or [Ethernet Shield](http://arduino.cc/en/Main/ArduinoEthernetShield) might be needed to give your board the power to connect to the Internet. To install the shield, hook the shield onto your Arduino board — you can use the pins on the shield the same way as the real pins on the Arduino boards.
 
-To send data to the AT&amp;T M2X service, or receive data from the AT&amp;T M2X service, your Arduino board needs a connection to the Internet. Hence, an Arduino [Wifi Shield](http://arduino.cc/en/Main/ArduinoWiFiShield) or [Ethernet Shield](http://arduino.cc/en/Main/ArduinoEthernetShield) is needed to give your board the power to connect to the Internet. To install the shield, hook the shield onto your Arduino board — you can use the pins on the shield the same way as the real pins on the Arduino boards.
+However, if you are using an [Arduino Yun](http://arduino.cc/en/Main/ArduinoBoardYun) board, [LinkIt One board](http://www.seeedstudio.com/depot/LinkIt-ONE-p-2017.html) or [ESP8266 module](http://www.adafruit.com/product/2471) instead of an [Arduino Uno](http://arduino.cc/en/Main/ArduinoBoardUno) board, you can skip this section since these boards normally has Wifi or Ethernet adapter on board, however, it is recommended to check out the board's manual for detailed instructions.
 
 Sensor Setup
 ------------
@@ -131,6 +138,29 @@ char streamName[] = "<stream name>";
 Using the M2XStreamClient library
 =========================
 
+To use the M2X Arduino library, you need to import the library first:
+
+```
+#define ARDUINO_PLATFORM
+#include <M2XStreamClient.h>
+```
+
+Notice as of this version of the library, you have to define the board platform you will use. We might add auto-detection part in the future, but let's leave that for a future implementation. Supported platform right now include:
+
+* `ARDUINO_PLATFORM`: can be used for Arduino boards(Uno, Yun, etc.) as well as LinkIt One boards.
+* `ESP8266_PLATFORM`: can be used for ESP8266 boards.
+
+These 2 lines right here only defines the writer functions, in other words, functions you can use to send values to M2X. To use reader functions, you have to add 2 more lines:
+
+```
+#define ARDUINO_PLATFORM
+#define M2X_ENABLE_READER
+#include <jsonlite.h>
+#include <M2XStreamClient.h>
+```
+
+This will give you reader functions so you can read M2X values from your board. However, keep in mind that reader functions are only available for certain boards. One example is that as of now, ESP8266 platform does not support reader functions.
+
 The M2X Arduino library can be used with both a Wifi connection and an Ethernet connection. For a Wifi connection, use the following code:
 
 ```
@@ -152,14 +182,26 @@ YunClient client;
 M2XStreamClient m2xClient(&client, m2xKey);
 ```
 
-In the M2XStreamClient, the following API functions are provided:
+Foe LinkIt One boards, use the following Wifi client specification:
+
+```
+LWifiClient client;
+M2XStreamClient m2xClient(&client, m2xKey);
+```
+
+For other boards not listed here, you might want to check their manual for the correct client type to use. Or you can also refer to the examples we provided for some tips.
+
+In the M2XStreamClient, the following writer API functions are provided:
 
 * `updateStreamValue`: Send stream value to M2X server
 * `postDeviceUpdates`: Post values from multiple streams to M2X server
-* `listStreamValues`: Receive stream value from M2X server
 * `updateLocation`: Send location value of a device to M2X server
-* `readLocation`: Receive location values of a device from M2X server
 * `deleteValues`: Delete stream values from M2X server
+
+And the following 2 reader functions are provided:
+
+* `listStreamValues`: Receive stream value from M2X server
+* `readLocation`: Receive location values of a device from M2X server
 
 Returned values
 ---------------
@@ -202,6 +244,31 @@ int postDeviceUpdates(const char* deviceId, int streamNum,
 
 Please refer to the comments in the source code on how to use this function, basically, you need to provide the list of streams you want to post to, and values for each stream.
 
+Update Device Location
+--------------------------
+
+You can use the following function to update the location for a device:
+
+```
+template <class T>
+int updateLocation(const char* deviceId, const char* name,
+                   T latitude, T longitude, T elevation);
+```
+
+Different from stream values, locations are attached to devices rather than streams. We use templates here, since the values may be in different format, for example, you can express latitudes in both `double` and `const char*`.
+
+Delete stream values
+--------------------
+
+The following function can be used to delete stream values within a date range:
+
+```
+int deleteValues(const char* deviceId, const char* streamName,
+                 const char* from, const char* end);
+```
+
+`from` and `end` fields here follow ISO 8601 time format.
+
 List stream values
 ------------------
 
@@ -233,19 +300,6 @@ Besides the device ID and stream name, only the callback function and a user con
 start=2014-10-01T00:00:00Z&end=2014-10-10T00:00:00Z
 ```
 
-Update Device Location
---------------------------
-
-You can use the following function to update the location for a device:
-
-```
-template <class T>
-int updateLocation(const char* deviceId, const char* name,
-                   T latitude, T longitude, T elevation);
-```
-
-Different from stream values, locations are attached to devices rather than streams. We use templates here, since the values may be in different format, for example, you can express latitudes in both `double` and `const char*`.
-
 Read Device Location
 ------------------------
 
@@ -272,122 +326,60 @@ int readLocation(const char* deviceId, location_read_callback callback,
 
 ```
 
-Delete stream values
---------------------
-
-The following function can be used to delete stream values within a date range:
-
-```
-int deleteValues(const char* deviceId, const char* streamName,
-                 const char* from, const char* end);
-```
-
-`from` and `end` fields here follow ISO 8601 time format.
-
 Examples
 ========
 
 We provide a series of examples that will help you get an idea of how to use the `M2XStreamClient` library to perform all kinds of tasks.
 
-Note that the examples may apply to certain types of boards. For example, the ones with `Uno` in the name apply to `Arduino Uno` boards only, while the ones with `Yun` only apply to `Arduino Yun` boards.
+The name of each example consists of 2 parts: the board to use, and the function of that example. For example, `UnoPost` means this example targets the Arduino Uno board with a Wifi adapter, and the example will post a value to M2X. `EthernetUnoReceive` means this example also targets the Arduino Uno board, but uses an Ethernet adapter, the example will fetch values from M2X.
 
 Note that the examples contain fictionary variables, and that they need to be configured as per the instructions above before running on your Arduino board. Each of the examples here also needs either a Wifi Shield or an Ethernet Shield hooked up to your device.
 
-In the `UnoPost`, `EthernetUnoPost` and `YunPost`, a temperature sensor, a breadboard and 5 wires are also needed to get temperature data, and you will need to wire the board like [this](http://cl.ly/image/3M0P3T1A0G0l) before running the code.
+In the `UnoPost`, `EthernetUnoPost` and `YunPost`, a temperature sensor, a breadboard and 5 wires are also needed to get temperature data, and you will need to wire the board like [this](http://cl.ly/image/3M0P3T1A0G0l) before running the code. If you are using other boards, keep in mind that we are reading from `A0` in the code and the wiring should be similar to this one shown in the illustration.
 
 After you have configured your variables and the board, plug the Arduino board into your computer via a Micro-USB cable, click `Verify` in the Arduino IDE, then click `Upload`, and the code should be uploaded to the board. You can check all the outputs in the `Serial Monitor` of the Arduino IDE.
 
-UnoPost
+Below is a short description for each example function group:
+
+Post
 -------
 
-This example shows how to post temperatures to M2X. Before running this example, you will need to have a valid M2X Key, a device ID and a stream name. The Arduino board needs to be configured like [this](http://cl.ly/image/3M0P3T1A0G0l). In this example, we are using an [Arduino Uno](http://arduino.cc/en/Main/arduinoBoardUno) board. If you are using other boards, keep in mind that we are reading from `A0` in the code and the wiring should be similar to this one shown in the illustration.
+This example shows how to post temperatures to M2X.
 
-UnoTime
+Time
 -------
 
-This example works like `UnoPost`, except that it uses M2X Time API with the TimeService provided to generate timestamps for the posted data.
+This example works like `Post`, except that it uses M2X Time API with the TimeService provided to generate timestamps for the posted data.
 
-UnoPostMultiple
+PostMultiple
 ---------------
 
 This example shows how to post multiple values to multiple streams in one API call.
 
-UnoFetchValues
---------------
-
-This example reads stream values from M2X server and prints the stream data point to Serial interface. You can find the actual values in the Arduino `Serial Monitor`.
-
-UnoReadLocation
----------------
-
-This example reads location data of a device from M2X, and prints them to Serial interface. You can check the output in the `Serial Monitor` of the Arduino IDE.
-
-UnoUpdateLocation
+UpdateLocation
 -----------------
 
 This example sends location data to M2X. Ideally a GPS device should be used here to read the coordinates, but for simplicity, we just use pre-set values here to show how to use the API.
 
-UnoDelete
+Delete
 ---------
 
 This example shows how to delete values within a stream by providing a date/time range.
 
-EthernetUnoPost
----------------
-
-This example is similar to the `UnoPost`, except that EthernetClient is used instead of WifiClient. If you are using an Ethernet Shield instead of a Wifi Shield, you can use this example.
-
-EthernetUnoTime
----------------
-
-This example works like `EthernetUnoPost`, except that it uses M2X Time API with the TimeService provided to generate timestamps for the posted data.
-
-EthernetUnoReceive
-------------------
-
-This example is similar to the `UnoReceive`, except that EthernetClient is used instead of WifiClient.
-
-YunPost
--------
-
-This example works like `UnoPost`, except that it works on an [Arduino Yun](http://arduino.cc/en/Main/ArduinoBoardYun) board instead of an [Arduino Uno](http://arduino.cc/en/Main/arduinoBoardUno) board.
-
-YunTime
--------
-
-This example works like `YunPost`, except that it uses M2X Time API with the TimeService provided to generate timestamps for the posted data.
-
-YunPostMultiple
----------------
-
-This example works like `UnoPostMultiple`, except that it works on an [Arduino Yun](http://arduino.cc/en/Main/ArduinoBoardYun) board.
-
-YunFetchValues
+FetchValues
 --------------
 
-This example works like `UnoFetchValues`, except that it works on an [Arduino Yun](http://arduino.cc/en/Main/ArduinoBoardYun) board.
+This example reads stream values from M2X server and prints the stream data point to Serial interface. You can find the actual values in the Arduino `Serial Monitor`.
 
-YunReadLocation
+ReadLocation
 ---------------
 
-This example works like `UnoReadLocation`, except that it works on an [Arduino Yun](http://arduino.cc/en/Main/ArduinoBoardYun) board.
+This example reads location data of a device from M2X, and prints them to Serial interface. You can check the output in the `Serial Monitor` of the Arduino IDE.
 
-YunUpdateLocation
------------------
+LinkIt One Board Note
+=====================
 
-This example works like `UnoUpdateLocation`, except that it works on an [Arduino Yun](http://arduino.cc/en/Main/ArduinoBoardYun) board.
-
-LinkIt One Support
-==================
-
-This library is also compatible with the [LinkIt One board](http://www.seeedstudio.com/depot/LinkIt-ONE-p-2017.html). LinkIt One examples start with `LinkIt` and are written specifically for the LinkIt One board. To use this library on the LinkIt One board, a specific Wifi client is needed:
-
-```
-LWifiClient client;
-M2XStreamClient m2xClient(&client, m2xKey);
-```
-
-The steps used to run the examples also differ from a standard Arduino board, and are listed below:
+To run the examples for a LinkIt One board, The steps are slightly different from a standard Arduino board, and are listed below:
 
 * Follow the [Quick Start Guide](http://www.seeedstudio.com/wiki/LinkIt_ONE#Quick_Start_Guide) to setup the environment for the board. Keep a note of the 2 COM ports used as we will use both of them later.
 * Follow the `How to Install the library` section above to install the libraries needed.
