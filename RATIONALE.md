@@ -45,3 +45,7 @@ To define that he / she is now using Arduino boards. This way we can provide sup
 Of course! We do have this in mind. In the future we will definitely add auto-detection code so if you don't specify the platform to use, we can detect them for you. However, since there're many embedded development environments, and new environments are coming out everyday, we do want to make sure we are careful with this feature, since it might be worse to detect the platform wrong than not detecting at all.
 
 And even if we have auto-detection in place, we will also support manual overrides, so if you do provide a platform definition at the top of the `#include` line, we will use your specified one and disable auto-detection.
+
+#### Don't you know something called [amalgamation](https://www.sqlite.org/amalgamation.html) exists?
+
+Yes we do? However, since our library is quite short, we don't believe introducing amalgamation is necessary. This might be helpful for something as big as SQLite, but for our simple library that only has around 1200 lines of code, we want to keep it simple here.
