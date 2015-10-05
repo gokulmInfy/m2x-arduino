@@ -1,4 +1,3 @@
-#include <jsonlite.h>
 #include <LWiFi.h>
 #include <LWiFiClient.h>
 

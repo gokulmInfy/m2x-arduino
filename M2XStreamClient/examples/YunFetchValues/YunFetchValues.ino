@@ -1,4 +1,3 @@
-#include <jsonlite.h>
 #include <Console.h>
 #include <YunClient.h>
 
