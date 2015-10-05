@@ -1,13 +1,17 @@
 #ifndef M2XStreamClient_h
 #define M2XStreamClient_h
 
-#if (!defined(ARDUINO_PLATFORM))
+#if (!defined(ARDUINO_PLATFORM)) && (!defined(ESP8266_PLATFORM))
 #error "Platform definition is missing!"
 #endif
 
 #ifdef ARDUINO_PLATFORM
 #include "m2x-arduino.h"
 #endif  /* ARDUINO_PLATFORM */
+
+#ifdef ESP8266_PLATFORM
+#include "m2x-esp8266.h"
+#endif /* ESP8266_PLATFORM */
 
 /* If we don't have DBG defined, provide dump implementation */
 #ifndef DBG
