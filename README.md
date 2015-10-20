@@ -391,6 +391,18 @@ To run the examples for a LinkIt One board, The steps are slightly different fro
 
 *NOTE*: Currently LinkIt One board development is only supported on Microsoft Windows XP, Windows Vista and Windows 7. It is strongly recommended that you use a 32-bit version instead of a 64-bit version for maximum compatibility.
 
+ESP8266 Note
+============
+
+We've successfully tested the example on an ESP8266 chip provided in the [Adafruit HUZZAH ESP8266 Breakout](http://www.adafruit.com/products/2471?&main_page=product_info&products_id=2471). If you are using other ESP8266 breakout combination, the code will theoretically work, but the setup step might be slightly different.
+
+To run the example, you should follow the setup guide at [here](https://learn.adafruit.com/adafruit-huzzah-esp8266-breakout/overview) to assemble the board. Then you can install the M2X library following notes above, at this time, you should be able to start playing with the board.
+
+However, 2 points here are worth mentioning:
+
+* ESP8266 chip must be put into a special bootload mode before you flashing the Arduino program onto the chip, otherwise, the steps will just fail with `espcomm_open failed` error. To turn the chip into this mode, you have to follow the steps at [here](https://learn.adafruit.com/adafruit-huzzah-esp8266-breakout/using-arduino-ide#blink-test). Notice this only applies to Adafruit HUZZAH ESP8266 Breakout, if you are using other modules, the steps may vary.
+* Right now only writer functions work on ESP8266 chip, in other words, you can use the board to post values to M2X, but not read and parse value returned by M2X server. This is because we haven't found a way to get jsonlite compiled successfully on ESP8266. We will continue working on this and will change this note if/when we can get it working.
+
 LICENSE
 =======
 
