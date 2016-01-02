@@ -26,6 +26,7 @@ This library depends on [jsonlite](https://github.com/citrusbyte/jsonlite), the 
 
    ```
    $ git clone https://github.com/attm2x/m2x-arduino
+   $ cd m2x-arduino
    $ git submodule update --init
    ```
 
