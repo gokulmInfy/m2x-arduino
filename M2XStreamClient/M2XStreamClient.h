@@ -5,6 +5,8 @@
 #error "Platform definition is missing!"
 #endif
 
+#define M2X_VERSION "2.2.0"
+
 #ifdef ARDUINO_PLATFORM
 #include "m2x-arduino.h"
 #endif  /* ARDUINO_PLATFORM */

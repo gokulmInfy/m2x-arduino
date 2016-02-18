@@ -1,5 +1,5 @@
 #include "Arduino.h"
-#define USER_AGENT "User-Agent: M2X ESP8266 Client/2.2.0"
+#define USER_AGENT "User-Agent: M2X ESP8266 Client/" M2X_VERSION
 
 #ifdef DEBUG
 #define DBG(fmt_, data_) Serial.print(data_)

@@ -1,5 +1,5 @@
 #include "mbed.h"
-#define USER_AGENT "User-Agent: M2X Mbed Client/2.2.0"
+#define USER_AGENT "User-Agent: M2X Mbed Client/" M2X_VERSION
 
 #ifdef DEBUG
 #define DBG(fmt_, data_) printf((fmt_), (data_))
