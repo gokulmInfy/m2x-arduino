@@ -11,5 +11,5 @@ class M2XTimer {
 public:
   void start() {}
 
-  int read_ms() { return millis(); }
+  unsigned long read_ms() { return millis(); }
 };

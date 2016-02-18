@@ -11,7 +11,7 @@ class M2XTimer {
 public:
   void start() { _timer.start(); }
 
-  int read_ms() {
+  unsigned long read_ms() {
     // In case of a timestamp overflow, we reset the server timestamp recorded.
     // Notice that unlike Arduino, mbed would overflow every 30 minutes,
     // so if 2 calls to this API are more than 30 minutes apart, we are
