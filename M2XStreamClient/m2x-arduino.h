@@ -6,3 +6,10 @@
 #define DBGLN(fmt_, data_) Serial.println(data_)
 #define DBGLNEND Serial.println()
 #endif  /* DEBUG */
+
+class M2XTimer {
+public:
+  void start() {}
+
+  int read_ms() { return millis(); }
+};

@@ -1,7 +1,7 @@
 #ifndef M2XStreamClient_h
 #define M2XStreamClient_h
 
-#if (!defined(ARDUINO_PLATFORM)) && (!defined(ESP8266_PLATFORM))
+#if (!defined(ARDUINO_PLATFORM)) && (!defined(ESP8266_PLATFORM)) && (!defined(MBED_PLATFORM))
 #error "Platform definition is missing!"
 #endif
 
@@ -12,6 +12,10 @@
 #ifdef ESP8266_PLATFORM
 #include "m2x-esp8266.h"
 #endif /* ESP8266_PLATFORM */
+
+#ifdef MBED_PLATFORM
+#include "m2x-mbed.h"
+#endif /* MBED_PLATFORM */
 
 /* If we don't have DBG defined, provide dump implementation */
 #ifndef DBG
@@ -360,6 +364,7 @@ private:
   M2XStreamClient* _client;
   int32_t _server_timestamp;
   uint32_t _local_last_milli;
+  M2XTimer _timer;
 };
 
 
@@ -840,6 +845,7 @@ TimeService::TimeService(M2XStreamClient* client) : _client(client) {
 }
 
 int TimeService::init() {
+  _timer.start();
   return reset();
 }
 
@@ -849,20 +855,22 @@ int TimeService::reset() {
 
   if (m2x_status_is_success(status)) {
     _server_timestamp = ts;
-    _local_last_milli = millis();
+    _local_last_milli = _timer.read_ms();
   }
 
   return status;
 }
 
 int TimeService::getTimestamp(char* buffer, int* length) {
-  uint32_t now = millis();
+  uint32_t now = _timer.read_ms();
   if (now < _local_last_milli) {
     // In case of a timestamp overflow(happens once every 50 days on
     // Arduino), we reset the server timestamp recorded.
+    // NOTE: while on an Arduino this might be okay, the situation is worse
+    // on mbed, see the notes in m2x-mbed.h for details
     int status = reset();
     if (!m2x_status_is_success(status)) { return status; }
-    now = millis();
+    now = _timer.read_ms();
   }
   if (now < _local_last_milli) {
     // We have already reseted the timestamp, so this cannot happen

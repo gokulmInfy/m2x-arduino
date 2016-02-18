@@ -10,3 +10,10 @@
 #ifdef M2X_ENABLE_READER
 #error "As of now, ESP8266 does not support reader functions!"
 #endif  /* M2X_ENABLE_READER */
+
+class M2XTimer {
+public:
+  void start() {}
+
+  int read_ms() { return millis(); }
+};
