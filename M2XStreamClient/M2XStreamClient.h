@@ -119,7 +119,8 @@ public:
                   void (* idlefunc)(void) = NULL,
                   int case_insensitive = 1,
                   const char* host = DEFAULT_M2X_HOST,
-                  int port = DEFAULT_M2X_PORT);
+                  int port = DEFAULT_M2X_PORT,
+                  const char* path_prefix = NULL);
 
   // Push data stream value using PUT request, returns the HTTP status code
   template <class T>
@@ -264,6 +265,7 @@ private:
   const char* _host;
   int _port;
   void (* _idlefunc)(void);
+  const char* _path_prefix;
   NullPrint _null_print;
 
   // Writes the HTTP header part for updating a stream value
@@ -345,12 +347,14 @@ M2XStreamClient::M2XStreamClient(Client* client,
                                  void (* idlefunc)(void),
                                  int case_insensitive,
                                  const char* host,
-                                 int port) : _client(client),
+                                 int port,
+                                 const char* path_prefix) : _client(client),
                                              _key(key),
                                              _idlefunc(idlefunc),
                                              _case_insensitive(case_insensitive),
                                              _host(host),
                                              _port(port),
+                                             _path_prefix(path_prefix),
                                              _null_print() {
 }
 
@@ -406,7 +410,9 @@ int M2XStreamClient::postDeviceUpdates(const char* deviceId, int streamNum,
     DBGLN("%s", "Connected to M2X server!");
     int length = write_multiple_values(&_null_print, streamNum, names,
                                        counts, ats, values);
-    _client->print("POST /v2/devices/");
+    _client->print("POST ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->print("/v2/devices/");
     print_encoded_string(_client, deviceId);
     _client->println("/updates HTTP/1.0");
     writeHttpHeader(length);
@@ -462,7 +468,9 @@ int M2XStreamClient::updateLocation(const char* deviceId,
 
     int length = write_location_data(&_null_print, name, latitude, longitude,
                                      elevation);
-    _client->print("PUT /v2/devices/");
+    _client->print("PUT ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->print("/v2/devices/");
     print_encoded_string(_client, deviceId);
     _client->println("/location HTTP/1.0");
 
@@ -522,7 +530,9 @@ int M2XStreamClient::getTimestamp(char* buffer, int *bufferLength) {
   if (bufferLength == NULL) { return E_INVALID; }
   if (_client->connect(_host, _port)) {
     DBGLN("%s", "Connected to M2X server!");
-    _client->println("GET /v2/time/seconds HTTP/1.0");
+    _client->print("GET ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->println("/v2/time/seconds HTTP/1.0");
 
     writeHttpHeader(-1);
   } else {
@@ -576,7 +586,9 @@ int M2XStreamClient::getTimestamp(char* buffer, int *bufferLength) {
 void M2XStreamClient::writePutHeader(const char* deviceId,
                                      const char* streamName,
                                      int contentLength) {
-  _client->print("PUT /v2/devices/");
+  _client->print("PUT ");
+  if (_path_prefix) { _client->print(_path_prefix); }
+  _client->print("/v2/devices/");
   print_encoded_string(_client, deviceId);
   _client->print("/streams/");
   print_encoded_string(_client, streamName);
@@ -588,7 +600,9 @@ void M2XStreamClient::writePutHeader(const char* deviceId,
 void M2XStreamClient::writeDeleteHeader(const char* deviceId,
                                         const char* streamName,
                                         int contentLength) {
-  _client->print("DELETE /v2/devices/");
+  _client->print("DELETE ");
+  if (_path_prefix) { _client->print(_path_prefix); }
+  _client->print("/v2/devices/");
   print_encoded_string(_client, deviceId);
   _client->print("/streams/");
   print_encoded_string(_client, streamName);
@@ -1069,7 +1083,9 @@ int M2XStreamClient::listStreamValues(const char* deviceId, const char* streamNa
                                       const char* query) {
   if (_client->connect(_host, _port)) {
     DBGLN("%s", "Connected to M2X server!");
-    _client->print("GET /v2/devices/");
+    _client->print("GET ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->print("/v2/devices/");
     print_encoded_string(_client, deviceId);
     _client->print("/streams/");
     print_encoded_string(_client, streamName);
@@ -1102,7 +1118,9 @@ int M2XStreamClient::readLocation(const char* deviceId,
                                   void* context) {
   if (_client->connect(_host, _port)) {
     DBGLN("%s", "Connected to M2X server!");
-    _client->print("GET /v2/devices/");
+    _client->print("GET ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->print("/v2/devices/");
     print_encoded_string(_client, deviceId);
     _client->println("/location HTTP/1.0");
 
