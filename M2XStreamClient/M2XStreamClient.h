@@ -123,6 +123,8 @@ public:
                   const char* path_prefix = NULL);
 
   // Push data stream value using PUT request, returns the HTTP status code
+  // NOTE: if you want to update by a serial, use "serial/<serial ID>" as
+  // the device ID here.
   template <class T>
   int updateStreamValue(const char* deviceId, const char* streamName, T value);
 
@@ -144,6 +146,8 @@ public:
   // stream, the succeeding +counts[1]+ number of items contain values
   // for the second stream, etc. The length of this array should be
   // the sum of all values in +counts+ array.
+  // NOTE: if you want to update by a serial, use "serial/<serial ID>" as
+  // the device ID here.
   template <class T>
   int postDeviceUpdates(const char* deviceId, int streamNum,
                         const char* names[], const int counts[],
@@ -158,6 +162,8 @@ public:
   // be exactly +streamNum+. Notice that the array of +values+ should
   // match the array of +names+, and that the ith value in +values+ is
   // exactly the value to post for the ith stream name in +names+
+  // NOTE: if you want to update by a serial, use "serial/<serial ID>" as
+  // the device ID here.
   template <class T>
   int postDeviceUpdate(const char* deviceId, int streamNum,
                        const char* names[], T values[],
@@ -195,6 +201,8 @@ public:
   // precision, which means you are free to use the double-version only
   // without any precision problems.
   // Returned value is the http status code.
+  // NOTE: if you want to update by a serial, use "serial/<serial ID>" as
+  // the device ID here.
   template <class T>
   int updateLocation(const char* deviceId, const char* name,
                      T latitude, T longitude, T elevation);
@@ -427,7 +435,7 @@ int M2XStreamClient::postDeviceUpdates(const char* deviceId, int streamNum,
     _client->print("POST ");
     if (_path_prefix) { _client->print(_path_prefix); }
     _client->print("/v2/devices/");
-    print_encoded_string(_client, deviceId);
+    _client->print(deviceId);
     _client->println("/updates HTTP/1.0");
     writeHttpHeader(length);
     write_multiple_values(_client, streamNum, names, counts, ats, values);
@@ -473,7 +481,7 @@ int M2XStreamClient::postDeviceUpdate(const char* deviceId, int streamNum,
     _client->print("POST ");
     if (_path_prefix) { _client->print(_path_prefix); }
     _client->print("/v2/devices/");
-    print_encoded_string(_client, deviceId);
+    _client->print(deviceId);
     _client->println("/update HTTP/1.0");
     writeHttpHeader(length);
     write_single_device_values(_client, streamNum, names, values, at);
@@ -531,7 +539,7 @@ int M2XStreamClient::updateLocation(const char* deviceId,
     _client->print("PUT ");
     if (_path_prefix) { _client->print(_path_prefix); }
     _client->print("/v2/devices/");
-    print_encoded_string(_client, deviceId);
+    _client->print(deviceId);
     _client->println("/location HTTP/1.0");
 
     writeHttpHeader(length);
@@ -649,7 +657,7 @@ void M2XStreamClient::writePutHeader(const char* deviceId,
   _client->print("PUT ");
   if (_path_prefix) { _client->print(_path_prefix); }
   _client->print("/v2/devices/");
-  print_encoded_string(_client, deviceId);
+  _client->print(deviceId);
   _client->print("/streams/");
   print_encoded_string(_client, streamName);
   _client->println("/value HTTP/1.0");
@@ -663,7 +671,7 @@ void M2XStreamClient::writeDeleteHeader(const char* deviceId,
   _client->print("DELETE ");
   if (_path_prefix) { _client->print(_path_prefix); }
   _client->print("/v2/devices/");
-  print_encoded_string(_client, deviceId);
+  _client->print(deviceId);
   _client->print("/streams/");
   print_encoded_string(_client, streamName);
   _client->print("/values");
@@ -1146,7 +1154,7 @@ int M2XStreamClient::listStreamValues(const char* deviceId, const char* streamNa
     _client->print("GET ");
     if (_path_prefix) { _client->print(_path_prefix); }
     _client->print("/v2/devices/");
-    print_encoded_string(_client, deviceId);
+    _client->print(deviceId);
     _client->print("/streams/");
     print_encoded_string(_client, streamName);
     _client->print("/values");
@@ -1181,7 +1189,7 @@ int M2XStreamClient::readLocation(const char* deviceId,
     _client->print("GET ");
     if (_path_prefix) { _client->print(_path_prefix); }
     _client->print("/v2/devices/");
-    print_encoded_string(_client, deviceId);
+    _client->print(deviceId);
     _client->println("/location HTTP/1.0");
 
     writeHttpHeader(-1);
