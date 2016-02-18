@@ -149,6 +149,20 @@ public:
                         const char* names[], const int counts[],
                         const char* ats[], T values[]);
 
+  // Post multiple values of a single device at once.
+  // +deviceId+ - id of the device to post values
+  // +streamNum+ - Number of streams to post
+  // +names+ - Array of stream names, the length of the array should
+  // be exactly +streamNum+
+  // +values+ - Array of values to post, the length of the array should
+  // be exactly +streamNum+. Notice that the array of +values+ should
+  // match the array of +names+, and that the ith value in +values+ is
+  // exactly the value to post for the ith stream name in +names+
+  template <class T>
+  int postDeviceUpdate(const char* deviceId, int streamNum,
+                       const char* names[], T values[],
+                       const char* at = NULL);
+
 #ifdef M2X_ENABLE_READER
   // Fetch values for a particular data stream. Since memory is
   // very limited on an Arduino, we cannot parse and get all the
@@ -417,6 +431,52 @@ int M2XStreamClient::postDeviceUpdates(const char* deviceId, int streamNum,
     _client->println("/updates HTTP/1.0");
     writeHttpHeader(length);
     write_multiple_values(_client, streamNum, names, counts, ats, values);
+  } else {
+    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
+    return E_NOCONNECTION;
+  }
+  return readStatusCode(true);
+}
+
+template <class T>
+inline int write_single_device_values(Print* print, int streamNum,
+                                      const char* names[], T values[],
+                                      const char* at) {
+  int bytes = 0;
+  bytes += print->print("{\"values\":{");
+  for (int i = 0; i < streamNum; i++) {
+    bytes += print->print("\"");
+    bytes += print->print(names[i]);
+    bytes += print->print("\": \"");
+    bytes += print->print(values[i]);
+    bytes += print->print("\"");
+    if (i < streamNum - 1) { bytes += print->print(","); }
+  }
+  bytes += print->print("}");
+  if (at != NULL) {
+    bytes += print->print(",\"timestamp\":\"");
+    bytes += print->print(at);
+    bytes += print->print("\"");
+  }
+  bytes += print->print("}");
+  return bytes;
+}
+
+template <class T>
+int M2XStreamClient::postDeviceUpdate(const char* deviceId, int streamNum,
+                                      const char* names[], T values[],
+                                      const char* at) {
+  if (_client->connect(_host, _port)) {
+    DBGLN("%s", "Connected to M2X server!");
+    int length = write_single_device_values(&_null_print, streamNum, names,
+                                            values, at);
+    _client->print("POST ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->print("/v2/devices/");
+    print_encoded_string(_client, deviceId);
+    _client->println("/update HTTP/1.0");
+    writeHttpHeader(length);
+    write_single_device_values(_client, streamNum, names, values, at);
   } else {
     DBGLN("%s", "ERROR: Cannot connect to M2X server!");
     return E_NOCONNECTION;
