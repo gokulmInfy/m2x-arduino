@@ -65,11 +65,15 @@ static inline bool m2x_status_is_error(int status) {
 // Null Print class used to calculate length to print
 class NullPrint : public Print {
 public:
+  size_t counter = 0;
+
   virtual size_t write(uint8_t b) {
+    counter++;
     return 1;
   }
 
   virtual size_t write(const uint8_t* buf, size_t size) {
+    counter += size;
     return size;
   }
 };
@@ -117,6 +121,8 @@ typedef void (*location_read_callback)(const char* name,
                                        int index,
                                        void* context);
 #endif  /* M2X_ENABLE_READER */
+
+typedef void (*m2x_fill_data_callback)(Print *print, void *context);
 
 class M2XStreamClient {
 public:
@@ -237,6 +243,44 @@ public:
   // or equal to the end timestamp.
   int deleteValues(const char* deviceId, const char* streamName,
                    const char* from, const char* end);
+
+  // Mark a command as processed.
+  // Link: https://m2x.att.com/developer/documentation/v2/commands#Device-Marks-a-Command-as-Processed
+  // To make sure the minimal amount of memory is needed, this API works with
+  // a callback function. The callback function is then used to fill the request
+  // data, note that in order to correctly set the content length in HTTP header,
+  // the callback function will be called twice, the caller must make sure both
+  // calls fill the Print object with exactly the same data.
+  // If you have a pre-allocated buffer filled with the data to post, you can
+  // use markCommandProcessedWithData API below.
+  int markCommandProcessed(const char* deviceId, const char* commandId,
+                           m2x_fill_data_callback callback, void *context);
+
+  // Mark a command as processed with a data buffer
+  // Link: https://m2x.att.com/developer/documentation/v2/commands#Device-Marks-a-Command-as-Processed
+  // This is exactly like markCommandProcessed, except that a buffer is use to
+  // contain the data to post as the request body.
+  int markCommandProcessedWithData(const char* deviceId, const char* commandId,
+                                   const char* data);
+
+  // Mark a command as rejected.
+  // Link: https://m2x.att.com/developer/documentation/v2/commands#Device-Marks-a-Command-as-Rejected
+  // To make sure the minimal amount of memory is needed, this API works with
+  // a callback function. The callback function is then used to fill the request
+  // data, note that in order to correctly set the content length in HTTP header,
+  // the callback function will be called twice, the caller must make sure both
+  // calls fill the Print object with exactly the same data.
+  // If you have a pre-allocated buffer filled with the data to post, you can
+  // use markCommandRejectedWithData API below.
+  int markCommandRejected(const char* deviceId, const char* commandId,
+                          m2x_fill_data_callback callback, void *context);
+
+  // Mark a command as rejected with a data buffer
+  // Link: https://m2x.att.com/developer/documentation/v2/commands#Device-Marks-a-Command-as-Rejected
+  // This is exactly like markCommandRejected, except that a buffer is use to
+  // contain the data to post as the request body.
+  int markCommandRejectedWithData(const char* deviceId, const char* commandId,
+                                  const char* data);
 
   // Fetches current timestamp in seconds from M2X server. Since we
   // are using signed 32-bit integer as return value, this will only
@@ -582,6 +626,78 @@ int M2XStreamClient::deleteValues(const char* deviceId, const char* streamName,
   }
 
   return readStatusCode(true);
+}
+
+int M2XStreamClient::markCommandProcessed(const char* deviceId,
+                                          const char* commandId,
+                                          m2x_fill_data_callback callback,
+                                          void *context) {
+  if (_client->connect(_host, _port)) {
+    DBGLN("%s", "Connected to M2X server!");
+    _null_print.counter = 0;
+    callback(&_null_print, context);
+    int length = _null_print.counter;
+    _client->print("POST ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->print("/v2/devices/");
+    _client->print(deviceId);
+    _client->print("/commands/");
+    _client->print(commandId);
+    _client->print("/process");
+    _client->println(" HTTP/1.0");
+    writeHttpHeader(length);
+    callback(_client, context);
+  } else {
+    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
+    return E_NOCONNECTION;
+  }
+  return readStatusCode(true);
+}
+
+static void m2x_fixed_buffer_filling_callback(Print *print, void *context) {
+  if (context) {
+    print->print((const char *) context);
+  }
+}
+
+int M2XStreamClient::markCommandProcessedWithData(const char* deviceId,
+                                                  const char* commandId,
+                                                  const char* data) {
+  return markCommandProcessed(deviceId, commandId,
+                              m2x_fixed_buffer_filling_callback, (void *) data);
+}
+
+int M2XStreamClient::markCommandRejected(const char* deviceId,
+                                         const char* commandId,
+                                         m2x_fill_data_callback callback,
+                                         void *context) {
+  if (_client->connect(_host, _port)) {
+    DBGLN("%s", "Connected to M2X server!");
+    _null_print.counter = 0;
+    callback(&_null_print, context);
+    int length = _null_print.counter;
+    _client->print("POST ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->print("/v2/devices/");
+    _client->print(deviceId);
+    _client->print("/commands/");
+    _client->print(commandId);
+    _client->print("/reject");
+    _client->println(" HTTP/1.0");
+    writeHttpHeader(length);
+    callback(_client, context);
+  } else {
+    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
+    return E_NOCONNECTION;
+  }
+  return readStatusCode(true);
+}
+
+int M2XStreamClient::markCommandRejectedWithData(const char* deviceId,
+                                                 const char* commandId,
+                                                 const char* data) {
+  return markCommandRejected(deviceId, commandId,
+                             m2x_fixed_buffer_filling_callback, (void *) data);
 }
 
 int M2XStreamClient::getTimestamp32(int32_t *ts) {
