@@ -65,7 +65,7 @@ static inline bool m2x_status_is_error(int status) {
 // Null Print class used to calculate length to print
 class NullPrint : public Print {
 public:
-  size_t counter = 0;
+  size_t counter;
 
   virtual size_t write(uint8_t b) {
     counter++;
@@ -120,6 +120,11 @@ typedef void (*location_read_callback)(const char* name,
                                        const char* timestamp,
                                        int index,
                                        void* context);
+
+typedef void (*m2x_command_read_callback)(const char* id,
+                                          const char* name,
+                                          int index,
+                                          void *context);
 #endif  /* M2X_ENABLE_READER */
 
 typedef void (*m2x_fill_data_callback)(Print *print, void *context);
@@ -243,6 +248,15 @@ public:
   // or equal to the end timestamp.
   int deleteValues(const char* deviceId, const char* streamName,
                    const char* from, const char* end);
+
+#ifdef M2X_ENABLE_READER
+  // Fetch commands available for this device, notice that for memory constraints,
+  // we only keep ID and name of the command received here.
+  // You can tweak the command receiving via the query parameter.
+  int listCommands(const char* deviceId,
+                   m2x_command_read_callback callback, void* context,
+                   const char* query = NULL);
+#endif  /* M2X_ENABLE_READER */
 
   // Mark a command as processed.
   // Link: https://m2x.att.com/developer/documentation/v2/commands#Device-Marks-a-Command-as-Processed
@@ -375,6 +389,9 @@ private:
   // Parses JSON response of location API, and calls callback function once
   // we get a data point
   int readLocation(location_read_callback callback, void* context);
+  // Parses JSON response of command API, and calls callback function once
+  // we get a data point
+  int readCommand(m2x_command_read_callback callback, void* context);
 #endif  /* M2X_ENABLE_READER */
 };
 
@@ -1272,6 +1289,72 @@ static void on_location_string_found(jsonlite_callback_context* context,
   }
 }
 
+#ifndef M2X_COMMAND_BUF_LEN
+#define M2X_COMMAND_BUF_LEN 40
+#endif  /* M2X_COMMAND_BUF_LEN */
+
+typedef struct {
+  uint8_t state;
+  char id_str[M2X_COMMAND_BUF_LEN + 1];
+  char name_str[M2X_COMMAND_BUF_LEN + 1];
+  int index;
+
+  m2x_command_read_callback callback;
+  void* context;
+} m2x_command_parsing_context_state;
+
+#define M2X_COMMAND_WAITING_ID 0x1
+#define M2X_COMMAND_GOT_ID 0x2
+#define M2X_COMMAND_WAITING_NAME 0x4
+#define M2X_COMMAND_GOT_NAME 0x8
+
+#define M2X_COMMAND_GOT_COMMAND (M2X_COMMAND_GOT_ID | M2X_COMMAND_GOT_NAME)
+#define M2X_COMMAND_TEST_GOT_COMMAND(state_) \
+  (((state_) & M2X_COMMAND_GOT_COMMAND) == M2X_COMMAND_GOT_COMMAND)
+
+#define M2X_COMMAND_TEST_IS_ID(state_) \
+  (((state_) & (M2X_COMMAND_WAITING_ID | M2X_COMMAND_GOT_ID)) == \
+   M2X_COMMAND_WAITING_ID)
+#define M2X_COMMAND_TEST_IS_NAME(state_) \
+  (((state_) & (M2X_COMMAND_WAITING_NAME | M2X_COMMAND_GOT_NAME)) == \
+   M2X_COMMAND_WAITING_NAME)
+
+static void m2x_on_command_key_found(jsonlite_callback_context* context,
+                                     jsonlite_token* token)
+{
+  m2x_command_parsing_context_state* state =
+      (m2x_command_parsing_context_state*) context->client_state;
+  if (strncmp((const char*) token->start, "id", 2) == 0) {
+    state->state |= M2X_COMMAND_WAITING_ID;
+  } else if (strncmp((const char*) token->start, "name", 4) == 0) {
+    state->state |= M2X_COMMAND_WAITING_NAME;
+  }
+}
+
+static void m2x_on_command_value_found(jsonlite_callback_context* context,
+                                       jsonlite_token* token)
+{
+  m2x_command_parsing_context_state* state =
+      (m2x_command_parsing_context_state*) context->client_state;
+  if (M2X_COMMAND_TEST_IS_ID(state->state)) {
+    strncpy(state->id_str, (const char*) token->start,
+            MIN(token->end - token->start, M2X_COMMAND_BUF_LEN));
+    state->id_str[MIN(token->end - token->start, M2X_COMMAND_BUF_LEN)] = '\0';
+    state->state |= M2X_COMMAND_GOT_ID;
+  } else if (M2X_COMMAND_TEST_IS_NAME(state->state)) {
+    strncpy(state->name_str, (const char*) token->start,
+            MIN(token->end - token->start, M2X_COMMAND_BUF_LEN));
+    state->name_str[MIN(token->end - token->start, M2X_COMMAND_BUF_LEN)] = '\0';
+    state->state |= M2X_COMMAND_GOT_NAME;
+  }
+
+  if (M2X_COMMAND_TEST_GOT_COMMAND(state->state)) {
+    state->callback(state->id_str, state->name_str,
+                    state->index++, state->context);
+    state->state = 0;
+  }
+}
+
 int M2XStreamClient::listStreamValues(const char* deviceId, const char* streamName,
                                       stream_value_read_callback callback, void* context,
                                       const char* query) {
@@ -1331,6 +1414,41 @@ int M2XStreamClient::readLocation(const char* deviceId,
   close();
   return status;
 }
+
+int M2XStreamClient::listCommands(const char* deviceId,
+                                  m2x_command_read_callback callback,
+                                  void* context,
+                                  const char* query) {
+  if (_client->connect(_host, _port)) {
+    DBGLN("%s", "Connected to M2X server!");
+    _client->print("GET ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->print("/v2/devices/");
+    _client->print(deviceId);
+    _client->print("/commands");
+
+    if (query) {
+      if (query[0] != '?') {
+        _client->print('?');
+      }
+      _client->print(query);
+    }
+
+    _client->println(" HTTP/1.0");
+    writeHttpHeader(-1);
+  } else {
+    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
+    return E_NOCONNECTION;
+  }
+  int status = readStatusCode(false);
+  if (status == 200) {
+    readCommand(callback, context);
+  }
+
+  close();
+  return status;
+}
+
 
 int M2XStreamClient::readStreamValue(stream_value_read_callback callback,
                                      void* context) {
@@ -1464,6 +1582,74 @@ int M2XStreamClient::readLocation(location_read_callback callback,
   close();
   return (result == jsonlite_result_ok) ? (E_OK) : (E_JSON_INVALID);
 }
+
+int M2XStreamClient::readCommand(m2x_command_read_callback callback,
+                                 void* context) {
+  const int BUF_LEN = 60;
+  char buf[BUF_LEN];
+
+  int length = readContentLength();
+  if (length < 0) {
+    close();
+    return length;
+  }
+
+  int index = skipHttpHeader();
+  if (index != E_OK) {
+    close();
+    return index;
+  }
+  index = 0;
+
+  m2x_command_parsing_context_state state;
+  state.state = 0;
+  state.index = 0;
+  state.callback = callback;
+  state.context = context;
+
+  jsonlite_parser_callbacks cbs = jsonlite_default_callbacks;
+  cbs.key_found = m2x_on_command_key_found;
+  cbs.string_found = m2x_on_command_value_found;
+  cbs.context.client_state = &state;
+
+  jsonlite_parser p = jsonlite_parser_init(jsonlite_parser_estimate_size(5));
+  jsonlite_parser_set_callback(p, &cbs);
+
+  jsonlite_result result = jsonlite_result_unknown;
+  while (index < length) {
+    int i = 0;
+
+    DBG("%s", "Received Data: ");
+    while ((i < BUF_LEN) && _client->available()) {
+      buf[i++] = _client->read();
+      DBG("%c", buf[i - 1]);
+    }
+    DBGLNEND;
+
+    if ((!_client->connected()) &&
+        (!_client->available()) &&
+        ((index + i) < length)) {
+      jsonlite_parser_release(p);
+      close();
+      return E_NOCONNECTION;
+    }
+
+    result = jsonlite_parser_tokenize(p, buf, i);
+    if ((result != jsonlite_result_ok) &&
+        (result != jsonlite_result_end_of_stream)) {
+      jsonlite_parser_release(p);
+      close();
+      return E_JSON_INVALID;
+    }
+
+    index += i;
+  }
+
+  jsonlite_parser_release(p);
+  close();
+  return (result == jsonlite_result_ok) ? (E_OK) : (E_JSON_INVALID);
+}
+
 #endif  /* M2X_ENABLE_READER */
 
 #endif  /* M2XStreamClient_h */
