@@ -19,20 +19,6 @@
 #include "m2x-mbed.h"
 #endif /* MBED_PLATFORM */
 
-/* If we don't have DBG defined, provide dump implementation */
-#ifndef DBG
-#define DBG(fmt_, data_)
-#define DBGLN(fmt_, data_)
-#define DBGLNEND
-#endif  /* DBG */
-
-#define MIN(a, b) (((a) > (b))?(b):(a))
-#define TO_HEX(t_) ((char) (((t_) > 9) ? ((t_) - 10 + 'A') : ((t_) + '0')))
-#define MAX_DOUBLE_DIGITS 7
-
-/* For tolower */
-#include <ctype.h>
-
 static const int E_OK = 0;
 static const int E_NOCONNECTION = -1;
 static const int E_DISCONNECTED = -2;
@@ -77,27 +63,6 @@ public:
     return size;
   }
 };
-
-// Encodes and prints string using Percent-encoding specified
-// in RFC 1738, Section 2.2
-static inline int print_encoded_string(Print* print, const char* str) {
-  int bytes = 0;
-  for (int i = 0; str[i] != 0; i++) {
-    if (((str[i] >= 'A') && (str[i] <= 'Z')) ||
-        ((str[i] >= 'a') && (str[i] <= 'z')) ||
-        ((str[i] >= '0') && (str[i] <= '9')) ||
-        (str[i] == '-') || (str[i] == '_') ||
-        (str[i] == '.') || (str[i] == '~')) {
-      bytes += print->print(str[i]);
-    } else {
-      // Encode all other characters
-      bytes += print->print('%');
-      bytes += print->print(TO_HEX(str[i] / 16));
-      bytes += print->print(TO_HEX(str[i] % 16));
-    }
-  }
-  return bytes;
-}
 
 #ifdef M2X_ENABLE_READER
 /*
@@ -432,6 +397,42 @@ private:
 
 
 // Implementations
+
+/* If we don't have DBG defined, provide dump implementation */
+#ifndef DBG
+#define DBG(fmt_, data_)
+#define DBGLN(fmt_, data_)
+#define DBGLNEND
+#endif  /* DBG */
+
+#define MIN(a, b) (((a) > (b))?(b):(a))
+#define TO_HEX(t_) ((char) (((t_) > 9) ? ((t_) - 10 + 'A') : ((t_) + '0')))
+#define MAX_DOUBLE_DIGITS 7
+
+/* For tolower */
+#include <ctype.h>
+
+// Encodes and prints string using Percent-encoding specified
+// in RFC 1738, Section 2.2
+static inline int print_encoded_string(Print* print, const char* str) {
+  int bytes = 0;
+  for (int i = 0; str[i] != 0; i++) {
+    if (((str[i] >= 'A') && (str[i] <= 'Z')) ||
+        ((str[i] >= 'a') && (str[i] <= 'z')) ||
+        ((str[i] >= '0') && (str[i] <= '9')) ||
+        (str[i] == '-') || (str[i] == '_') ||
+        (str[i] == '.') || (str[i] == '~')) {
+      bytes += print->print(str[i]);
+    } else {
+      // Encode all other characters
+      bytes += print->print('%');
+      bytes += print->print(TO_HEX(str[i] / 16));
+      bytes += print->print(TO_HEX(str[i] % 16));
+    }
+  }
+  return bytes;
+}
+
 M2XStreamClient::M2XStreamClient(Client* client,
                                  const char* key,
                                  void (* idlefunc)(void),
@@ -1116,6 +1117,100 @@ static inline int fill_iso8601_timestamp(int32_t timestamp, int32_t milli,
 /* Reader functions */
 #ifdef M2X_ENABLE_READER
 
+int M2XStreamClient::listStreamValues(const char* deviceId, const char* streamName,
+                                      stream_value_read_callback callback, void* context,
+                                      const char* query) {
+  if (_client->connect(_host, _port)) {
+    DBGLN("%s", "Connected to M2X server!");
+    _client->print("GET ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->print("/v2/devices/");
+    _client->print(deviceId);
+    _client->print("/streams/");
+    print_encoded_string(_client, streamName);
+    _client->print("/values");
+
+    if (query) {
+      if (query[0] != '?') {
+        _client->print('?');
+      }
+      _client->print(query);
+    }
+
+    _client->println(" HTTP/1.0");
+    writeHttpHeader(-1);
+  } else {
+    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
+    return E_NOCONNECTION;
+  }
+  int status = readStatusCode(false);
+  if (status == 200) {
+    readStreamValue(callback, context);
+  }
+
+  close();
+  return status;
+}
+
+int M2XStreamClient::readLocation(const char* deviceId,
+                                  location_read_callback callback,
+                                  void* context) {
+  if (_client->connect(_host, _port)) {
+    DBGLN("%s", "Connected to M2X server!");
+    _client->print("GET ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->print("/v2/devices/");
+    _client->print(deviceId);
+    _client->println("/location HTTP/1.0");
+
+    writeHttpHeader(-1);
+  } else {
+    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
+    return E_NOCONNECTION;
+  }
+  int status = readStatusCode(false);
+  if (status == 200) {
+    readLocation(callback, context);
+  }
+
+  close();
+  return status;
+}
+
+int M2XStreamClient::listCommands(const char* deviceId,
+                                  m2x_command_read_callback callback,
+                                  void* context,
+                                  const char* query) {
+  if (_client->connect(_host, _port)) {
+    DBGLN("%s", "Connected to M2X server!");
+    _client->print("GET ");
+    if (_path_prefix) { _client->print(_path_prefix); }
+    _client->print("/v2/devices/");
+    _client->print(deviceId);
+    _client->print("/commands");
+
+    if (query) {
+      if (query[0] != '?') {
+        _client->print('?');
+      }
+      _client->print(query);
+    }
+
+    _client->println(" HTTP/1.0");
+    writeHttpHeader(-1);
+  } else {
+    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
+    return E_NOCONNECTION;
+  }
+  int status = readStatusCode(false);
+  if (status == 200) {
+    readCommand(callback, context);
+  }
+
+  close();
+  return status;
+}
+
 // Data structures and functions used to parse stream values
 
 #define STREAM_BUF_LEN 32
@@ -1193,8 +1288,9 @@ static void on_stream_number_found(jsonlite_callback_context* context,
   on_stream_value_found(context, token, 2);
 }
 
-// Data structures and functions used to parse locations
+// jsonlite(https://github.com/amamchur/jsonlite) based reader functions
 
+// Data structures and functions used to parse locations
 #define LOCATION_BUF_LEN 20
 
 typedef struct {
@@ -1354,101 +1450,6 @@ static void m2x_on_command_value_found(jsonlite_callback_context* context,
     state->state = 0;
   }
 }
-
-int M2XStreamClient::listStreamValues(const char* deviceId, const char* streamName,
-                                      stream_value_read_callback callback, void* context,
-                                      const char* query) {
-  if (_client->connect(_host, _port)) {
-    DBGLN("%s", "Connected to M2X server!");
-    _client->print("GET ");
-    if (_path_prefix) { _client->print(_path_prefix); }
-    _client->print("/v2/devices/");
-    _client->print(deviceId);
-    _client->print("/streams/");
-    print_encoded_string(_client, streamName);
-    _client->print("/values");
-
-    if (query) {
-      if (query[0] != '?') {
-        _client->print('?');
-      }
-      _client->print(query);
-    }
-
-    _client->println(" HTTP/1.0");
-    writeHttpHeader(-1);
-  } else {
-    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
-    return E_NOCONNECTION;
-  }
-  int status = readStatusCode(false);
-  if (status == 200) {
-    readStreamValue(callback, context);
-  }
-
-  close();
-  return status;
-}
-
-int M2XStreamClient::readLocation(const char* deviceId,
-                                  location_read_callback callback,
-                                  void* context) {
-  if (_client->connect(_host, _port)) {
-    DBGLN("%s", "Connected to M2X server!");
-    _client->print("GET ");
-    if (_path_prefix) { _client->print(_path_prefix); }
-    _client->print("/v2/devices/");
-    _client->print(deviceId);
-    _client->println("/location HTTP/1.0");
-
-    writeHttpHeader(-1);
-  } else {
-    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
-    return E_NOCONNECTION;
-  }
-  int status = readStatusCode(false);
-  if (status == 200) {
-    readLocation(callback, context);
-  }
-
-  close();
-  return status;
-}
-
-int M2XStreamClient::listCommands(const char* deviceId,
-                                  m2x_command_read_callback callback,
-                                  void* context,
-                                  const char* query) {
-  if (_client->connect(_host, _port)) {
-    DBGLN("%s", "Connected to M2X server!");
-    _client->print("GET ");
-    if (_path_prefix) { _client->print(_path_prefix); }
-    _client->print("/v2/devices/");
-    _client->print(deviceId);
-    _client->print("/commands");
-
-    if (query) {
-      if (query[0] != '?') {
-        _client->print('?');
-      }
-      _client->print(query);
-    }
-
-    _client->println(" HTTP/1.0");
-    writeHttpHeader(-1);
-  } else {
-    DBGLN("%s", "ERROR: Cannot connect to M2X server!");
-    return E_NOCONNECTION;
-  }
-  int status = readStatusCode(false);
-  if (status == 200) {
-    readCommand(callback, context);
-  }
-
-  close();
-  return status;
-}
-
 
 int M2XStreamClient::readStreamValue(stream_value_read_callback callback,
                                      void* context) {
