@@ -1211,8 +1211,9 @@ int M2XStreamClient::listCommands(const char* deviceId,
   return status;
 }
 
-// Data structures and functions used to parse stream values
+// jsonlite(https://github.com/amamchur/jsonlite) based reader functions
 
+// Stream value parsing implementation
 #define STREAM_BUF_LEN 32
 
 typedef struct {
@@ -1288,9 +1289,74 @@ static void on_stream_number_found(jsonlite_callback_context* context,
   on_stream_value_found(context, token, 2);
 }
 
-// jsonlite(https://github.com/amamchur/jsonlite) based reader functions
+int M2XStreamClient::readStreamValue(stream_value_read_callback callback,
+                                     void* context) {
+  const int BUF_LEN = 64;
+  char buf[BUF_LEN];
 
-// Data structures and functions used to parse locations
+  int length = readContentLength();
+  if (length < 0) {
+    close();
+    return length;
+  }
+
+  int index = skipHttpHeader();
+  if (index != E_OK) {
+    close();
+    return index;
+  }
+  index = 0;
+
+  stream_parsing_context_state state;
+  state.state = state.index = 0;
+  state.callback = callback;
+  state.context = context;
+
+  jsonlite_parser_callbacks cbs = jsonlite_default_callbacks;
+  cbs.key_found = on_stream_key_found;
+  cbs.number_found = on_stream_number_found;
+  cbs.string_found = on_stream_string_found;
+  cbs.context.client_state = &state;
+
+  jsonlite_parser p = jsonlite_parser_init(jsonlite_parser_estimate_size(5));
+  jsonlite_parser_set_callback(p, &cbs);
+
+  jsonlite_result result = jsonlite_result_unknown;
+  while (index < length) {
+    int i = 0;
+
+    DBG("%s", "Received Data: ");
+    while ((i < BUF_LEN) && _client->available()) {
+      buf[i++] = _client->read();
+      DBG("%c", buf[i - 1]);
+    }
+    DBGLNEND;
+
+    if ((!_client->connected()) &&
+        (!_client->available()) &&
+        ((index + i) < length)) {
+      jsonlite_parser_release(p);
+      close();
+      return E_NOCONNECTION;
+    }
+
+    result = jsonlite_parser_tokenize(p, buf, i);
+    if ((result != jsonlite_result_ok) &&
+        (result != jsonlite_result_end_of_stream)) {
+      jsonlite_parser_release(p);
+      close();
+      return E_JSON_INVALID;
+    }
+
+    index += i;
+  }
+
+  jsonlite_parser_release(p);
+  close();
+  return (result == jsonlite_result_ok) ? (E_OK) : (E_JSON_INVALID);
+}
+
+// Location parsing implementation
 #define LOCATION_BUF_LEN 20
 
 typedef struct {
@@ -1385,139 +1451,6 @@ static void on_location_string_found(jsonlite_callback_context* context,
   }
 }
 
-#ifndef M2X_COMMAND_BUF_LEN
-#define M2X_COMMAND_BUF_LEN 40
-#endif  /* M2X_COMMAND_BUF_LEN */
-
-typedef struct {
-  uint8_t state;
-  char id_str[M2X_COMMAND_BUF_LEN + 1];
-  char name_str[M2X_COMMAND_BUF_LEN + 1];
-  int index;
-
-  m2x_command_read_callback callback;
-  void* context;
-} m2x_command_parsing_context_state;
-
-#define M2X_COMMAND_WAITING_ID 0x1
-#define M2X_COMMAND_GOT_ID 0x2
-#define M2X_COMMAND_WAITING_NAME 0x4
-#define M2X_COMMAND_GOT_NAME 0x8
-
-#define M2X_COMMAND_GOT_COMMAND (M2X_COMMAND_GOT_ID | M2X_COMMAND_GOT_NAME)
-#define M2X_COMMAND_TEST_GOT_COMMAND(state_) \
-  (((state_) & M2X_COMMAND_GOT_COMMAND) == M2X_COMMAND_GOT_COMMAND)
-
-#define M2X_COMMAND_TEST_IS_ID(state_) \
-  (((state_) & (M2X_COMMAND_WAITING_ID | M2X_COMMAND_GOT_ID)) == \
-   M2X_COMMAND_WAITING_ID)
-#define M2X_COMMAND_TEST_IS_NAME(state_) \
-  (((state_) & (M2X_COMMAND_WAITING_NAME | M2X_COMMAND_GOT_NAME)) == \
-   M2X_COMMAND_WAITING_NAME)
-
-static void m2x_on_command_key_found(jsonlite_callback_context* context,
-                                     jsonlite_token* token)
-{
-  m2x_command_parsing_context_state* state =
-      (m2x_command_parsing_context_state*) context->client_state;
-  if (strncmp((const char*) token->start, "id", 2) == 0) {
-    state->state |= M2X_COMMAND_WAITING_ID;
-  } else if (strncmp((const char*) token->start, "name", 4) == 0) {
-    state->state |= M2X_COMMAND_WAITING_NAME;
-  }
-}
-
-static void m2x_on_command_value_found(jsonlite_callback_context* context,
-                                       jsonlite_token* token)
-{
-  m2x_command_parsing_context_state* state =
-      (m2x_command_parsing_context_state*) context->client_state;
-  if (M2X_COMMAND_TEST_IS_ID(state->state)) {
-    strncpy(state->id_str, (const char*) token->start,
-            MIN(token->end - token->start, M2X_COMMAND_BUF_LEN));
-    state->id_str[MIN(token->end - token->start, M2X_COMMAND_BUF_LEN)] = '\0';
-    state->state |= M2X_COMMAND_GOT_ID;
-  } else if (M2X_COMMAND_TEST_IS_NAME(state->state)) {
-    strncpy(state->name_str, (const char*) token->start,
-            MIN(token->end - token->start, M2X_COMMAND_BUF_LEN));
-    state->name_str[MIN(token->end - token->start, M2X_COMMAND_BUF_LEN)] = '\0';
-    state->state |= M2X_COMMAND_GOT_NAME;
-  }
-
-  if (M2X_COMMAND_TEST_GOT_COMMAND(state->state)) {
-    state->callback(state->id_str, state->name_str,
-                    state->index++, state->context);
-    state->state = 0;
-  }
-}
-
-int M2XStreamClient::readStreamValue(stream_value_read_callback callback,
-                                     void* context) {
-  const int BUF_LEN = 64;
-  char buf[BUF_LEN];
-
-  int length = readContentLength();
-  if (length < 0) {
-    close();
-    return length;
-  }
-
-  int index = skipHttpHeader();
-  if (index != E_OK) {
-    close();
-    return index;
-  }
-  index = 0;
-
-  stream_parsing_context_state state;
-  state.state = state.index = 0;
-  state.callback = callback;
-  state.context = context;
-
-  jsonlite_parser_callbacks cbs = jsonlite_default_callbacks;
-  cbs.key_found = on_stream_key_found;
-  cbs.number_found = on_stream_number_found;
-  cbs.string_found = on_stream_string_found;
-  cbs.context.client_state = &state;
-
-  jsonlite_parser p = jsonlite_parser_init(jsonlite_parser_estimate_size(5));
-  jsonlite_parser_set_callback(p, &cbs);
-
-  jsonlite_result result = jsonlite_result_unknown;
-  while (index < length) {
-    int i = 0;
-
-    DBG("%s", "Received Data: ");
-    while ((i < BUF_LEN) && _client->available()) {
-      buf[i++] = _client->read();
-      DBG("%c", buf[i - 1]);
-    }
-    DBGLNEND;
-
-    if ((!_client->connected()) &&
-        (!_client->available()) &&
-        ((index + i) < length)) {
-      jsonlite_parser_release(p);
-      close();
-      return E_NOCONNECTION;
-    }
-
-    result = jsonlite_parser_tokenize(p, buf, i);
-    if ((result != jsonlite_result_ok) &&
-        (result != jsonlite_result_end_of_stream)) {
-      jsonlite_parser_release(p);
-      close();
-      return E_JSON_INVALID;
-    }
-
-    index += i;
-  }
-
-  jsonlite_parser_release(p);
-  close();
-  return (result == jsonlite_result_ok) ? (E_OK) : (E_JSON_INVALID);
-}
-
 int M2XStreamClient::readLocation(location_read_callback callback,
                                   void* context) {
   const int BUF_LEN = 40;
@@ -1582,6 +1515,73 @@ int M2XStreamClient::readLocation(location_read_callback callback,
   jsonlite_parser_release(p);
   close();
   return (result == jsonlite_result_ok) ? (E_OK) : (E_JSON_INVALID);
+}
+
+// Command parsing implementation
+#ifndef M2X_COMMAND_BUF_LEN
+#define M2X_COMMAND_BUF_LEN 40
+#endif  /* M2X_COMMAND_BUF_LEN */
+
+typedef struct {
+  uint8_t state;
+  char id_str[M2X_COMMAND_BUF_LEN + 1];
+  char name_str[M2X_COMMAND_BUF_LEN + 1];
+  int index;
+
+  m2x_command_read_callback callback;
+  void* context;
+} m2x_command_parsing_context_state;
+
+#define M2X_COMMAND_WAITING_ID 0x1
+#define M2X_COMMAND_GOT_ID 0x2
+#define M2X_COMMAND_WAITING_NAME 0x4
+#define M2X_COMMAND_GOT_NAME 0x8
+
+#define M2X_COMMAND_GOT_COMMAND (M2X_COMMAND_GOT_ID | M2X_COMMAND_GOT_NAME)
+#define M2X_COMMAND_TEST_GOT_COMMAND(state_) \
+  (((state_) & M2X_COMMAND_GOT_COMMAND) == M2X_COMMAND_GOT_COMMAND)
+
+#define M2X_COMMAND_TEST_IS_ID(state_) \
+  (((state_) & (M2X_COMMAND_WAITING_ID | M2X_COMMAND_GOT_ID)) == \
+   M2X_COMMAND_WAITING_ID)
+#define M2X_COMMAND_TEST_IS_NAME(state_) \
+  (((state_) & (M2X_COMMAND_WAITING_NAME | M2X_COMMAND_GOT_NAME)) == \
+   M2X_COMMAND_WAITING_NAME)
+
+static void m2x_on_command_key_found(jsonlite_callback_context* context,
+                                     jsonlite_token* token)
+{
+  m2x_command_parsing_context_state* state =
+      (m2x_command_parsing_context_state*) context->client_state;
+  if (strncmp((const char*) token->start, "id", 2) == 0) {
+    state->state |= M2X_COMMAND_WAITING_ID;
+  } else if (strncmp((const char*) token->start, "name", 4) == 0) {
+    state->state |= M2X_COMMAND_WAITING_NAME;
+  }
+}
+
+static void m2x_on_command_value_found(jsonlite_callback_context* context,
+                                       jsonlite_token* token)
+{
+  m2x_command_parsing_context_state* state =
+      (m2x_command_parsing_context_state*) context->client_state;
+  if (M2X_COMMAND_TEST_IS_ID(state->state)) {
+    strncpy(state->id_str, (const char*) token->start,
+            MIN(token->end - token->start, M2X_COMMAND_BUF_LEN));
+    state->id_str[MIN(token->end - token->start, M2X_COMMAND_BUF_LEN)] = '\0';
+    state->state |= M2X_COMMAND_GOT_ID;
+  } else if (M2X_COMMAND_TEST_IS_NAME(state->state)) {
+    strncpy(state->name_str, (const char*) token->start,
+            MIN(token->end - token->start, M2X_COMMAND_BUF_LEN));
+    state->name_str[MIN(token->end - token->start, M2X_COMMAND_BUF_LEN)] = '\0';
+    state->state |= M2X_COMMAND_GOT_NAME;
+  }
+
+  if (M2X_COMMAND_TEST_GOT_COMMAND(state->state)) {
+    state->callback(state->id_str, state->name_str,
+                    state->index++, state->context);
+    state->state = 0;
+  }
 }
 
 int M2XStreamClient::readCommand(m2x_command_read_callback callback,
