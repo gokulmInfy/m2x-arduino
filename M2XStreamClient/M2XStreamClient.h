@@ -1,7 +1,8 @@
 #ifndef M2XStreamClient_h
 #define M2XStreamClient_h
 
-#if (!defined(ARDUINO_PLATFORM)) && (!defined(ESP8266_PLATFORM)) && (!defined(MBED_PLATFORM))
+#if (!defined(ARDUINO_PLATFORM)) && (!defined(ESP8266_PLATFORM)) && \
+  (!defined(MBED_PLATFORM)) && (!defined(ENERGIA_PLATFORM))
 #error "Platform definition is missing!"
 #endif
 
@@ -18,6 +19,10 @@
 #ifdef MBED_PLATFORM
 #include "m2x-mbed.h"
 #endif /* MBED_PLATFORM */
+
+#ifdef ENERGIA_PLATFORM
+#include "m2x-energia.h"
+#endif /* ENERGIA_PLATFORM */
 
 static const int E_OK = 0;
 static const int E_NOCONNECTION = -1;
