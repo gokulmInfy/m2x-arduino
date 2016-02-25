@@ -1278,6 +1278,10 @@ int M2XStreamClient::listCommands(const char* deviceId,
   (((state_) & (M2X_COMMAND_WAITING_NAME | M2X_COMMAND_GOT_NAME)) == \
    M2X_COMMAND_WAITING_NAME)
 
+#if !(defined(M2X_READER_JSONLITE) || defined(M2X_READER_AJSON))
+#define M2X_READER_JSONLITE
+#endif
+
 // jsonlite(https://github.com/amamchur/jsonlite) based reader functions
 #ifdef M2X_READER_JSONLITE
 
