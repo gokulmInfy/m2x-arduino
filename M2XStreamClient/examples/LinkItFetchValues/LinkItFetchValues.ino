@@ -16,7 +16,7 @@ char m2xKey[] = "<M2X access key>"; // Your M2X access key
 LWiFiClient client;
 M2XStreamClient m2xClient(&client, m2xKey);
 
-void on_data_point_found(const char* at, const char* value, int index, void* context, int type) {
+void on_data_point_found(const char* at, m2x_value value, int index, void* context, int type) {
   Serial.print("Found a data point, index:");
   Serial.println(index);
   Serial.print("Type:");
@@ -24,7 +24,7 @@ void on_data_point_found(const char* at, const char* value, int index, void* con
   Serial.print("At:");
   Serial.println(at);
   Serial.print("Value:");
-  Serial.println(value);
+  Serial.println(value.value_string);
 }
 
 void setup() {
