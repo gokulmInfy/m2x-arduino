@@ -65,15 +65,29 @@ public:
 };
 
 #ifdef M2X_ENABLE_READER
+typedef union {
+  const char* value_string;
+  int value_integer;
+  double value_number;
+} m2x_value;
+
 /*
- * +type+ indicates the value type: 1 for string, 2 for number
- * NOTE that the value type here only contains a hint on how
- * you can use the value. Even though 2 is returned, the value
- * is still stored in (const char *), and atoi/atof is needed to
- * get the actual value
+ * Callbacks for device stream values, +type+ indicates the value
+ * type, depending on the JSON parsing library in use, different
+ * value for +type+ could be returned.
+ *
+ * jsonlite:
+ * 1 - The value is returned as a string stored in value_string
+ * 2 - The value is actually a number, but it was stored in value_string
+ * as a char* buffer, you might need atoi/atof to parse that.
+ *
+ * aJson:
+ * 1 - The value is returned as a string stored in value_string
+ * 3 - The value is returned as an int stored in value_integer
+ * 4 - The value is returned as a double stored in value_number
  */
 typedef void (*stream_value_read_callback)(const char* at,
-                                           const char* value,
+                                           m2x_value value,
                                            int index,
                                            void* context,
                                            int type);
@@ -1211,7 +1225,61 @@ int M2XStreamClient::listCommands(const char* deviceId,
   return status;
 }
 
+#define WAITING_AT 0x1
+#define GOT_AT 0x2
+#define WAITING_VALUE 0x4
+#define GOT_VALUE 0x8
+
+#define GOT_STREAM (GOT_AT | GOT_VALUE)
+#define TEST_GOT_STREAM(state_) (((state_) & GOT_STREAM) == GOT_STREAM)
+
+#define TEST_IS_AT(state_) (((state_) & (WAITING_AT | GOT_AT)) == WAITING_AT)
+#define TEST_IS_VALUE(state_) (((state_) & (WAITING_VALUE | GOT_VALUE)) == \
+                               WAITING_VALUE)
+
+#define WAITING_NAME 0x1
+#define WAITING_LATITUDE 0x2
+#define WAITING_LONGITUDE 0x4
+#define WAITING_ELEVATION 0x8
+#define WAITING_TIMESTAMP 0x10
+
+#define GOT_NAME 0x20
+#define GOT_LATITUDE 0x40
+#define GOT_LONGITUDE 0x80
+#define GOT_ELEVATION 0x100
+#define GOT_TIMESTAMP 0x200
+
+#define GOT_LOCATION (GOT_NAME | GOT_LATITUDE | GOT_LONGITUDE | GOT_ELEVATION | GOT_TIMESTAMP)
+#define TEST_GOT_LOCATION(state_) (((state_) & GOT_LOCATION) == GOT_LOCATION)
+
+#define TEST_IS_NAME(state_) (((state_) & (WAITING_NAME | GOT_NAME)) == WAITING_NAME)
+#define TEST_IS_LATITUDE(state_) (((state_) & (WAITING_LATITUDE | GOT_LATITUDE)) \
+                                  == WAITING_LATITUDE)
+#define TEST_IS_LONGITUDE(state_) (((state_) & (WAITING_LONGITUDE | GOT_LONGITUDE)) \
+                                   == WAITING_LONGITUDE)
+#define TEST_IS_ELEVATION(state_) (((state_) & (WAITING_ELEVATION | GOT_ELEVATION)) \
+                                   == WAITING_ELEVATION)
+#define TEST_IS_TIMESTAMP(state_) (((state_) & (WAITING_TIMESTAMP | GOT_TIMESTAMP)) \
+                                   == WAITING_TIMESTAMP)
+
+#define M2X_COMMAND_WAITING_ID 0x1
+#define M2X_COMMAND_GOT_ID 0x2
+#define M2X_COMMAND_WAITING_NAME 0x4
+#define M2X_COMMAND_GOT_NAME 0x8
+
+#define M2X_COMMAND_GOT_COMMAND (M2X_COMMAND_GOT_ID | M2X_COMMAND_GOT_NAME)
+#define M2X_COMMAND_TEST_GOT_COMMAND(state_) \
+  (((state_) & M2X_COMMAND_GOT_COMMAND) == M2X_COMMAND_GOT_COMMAND)
+
+#define M2X_COMMAND_TEST_IS_ID(state_) \
+  (((state_) & (M2X_COMMAND_WAITING_ID | M2X_COMMAND_GOT_ID)) == \
+   M2X_COMMAND_WAITING_ID)
+#define M2X_COMMAND_TEST_IS_NAME(state_) \
+  (((state_) & (M2X_COMMAND_WAITING_NAME | M2X_COMMAND_GOT_NAME)) == \
+   M2X_COMMAND_WAITING_NAME)
+
 // jsonlite(https://github.com/amamchur/jsonlite) based reader functions
+#ifdef M2X_READER_JSONLITE
 
 // Stream value parsing implementation
 #define STREAM_BUF_LEN 32
@@ -1225,18 +1293,6 @@ typedef struct {
   stream_value_read_callback callback;
   void* context;
 } stream_parsing_context_state;
-
-#define WAITING_AT 0x1
-#define GOT_AT 0x2
-#define WAITING_VALUE 0x4
-#define GOT_VALUE 0x8
-
-#define GOT_STREAM (GOT_AT | GOT_VALUE)
-#define TEST_GOT_STREAM(state_) (((state_) & GOT_STREAM) == GOT_STREAM)
-
-#define TEST_IS_AT(state_) (((state_) & (WAITING_AT | GOT_AT)) == WAITING_AT)
-#define TEST_IS_VALUE(state_) (((state_) & (WAITING_VALUE | GOT_VALUE)) == \
-                               WAITING_VALUE)
 
 static void on_stream_key_found(jsonlite_callback_context* context,
                                 jsonlite_token* token)
@@ -1271,8 +1327,9 @@ static void on_stream_value_found(jsonlite_callback_context* context,
   }
 
   if (TEST_GOT_STREAM(state->state)) {
-    state->callback(state->at_str, state->value_str,
-                    state->index++, state->context, type);
+    m2x_value value;
+    value.value_string = state->value_str;
+    state->callback(state->at_str, value, state->index++, state->context, type);
     state->state = 0;
   }
 }
@@ -1371,31 +1428,6 @@ typedef struct {
   location_read_callback callback;
   void* context;
 } location_parsing_context_state;
-
-#define WAITING_NAME 0x1
-#define WAITING_LATITUDE 0x2
-#define WAITING_LONGITUDE 0x4
-#define WAITING_ELEVATION 0x8
-#define WAITING_TIMESTAMP 0x10
-
-#define GOT_NAME 0x20
-#define GOT_LATITUDE 0x40
-#define GOT_LONGITUDE 0x80
-#define GOT_ELEVATION 0x100
-#define GOT_TIMESTAMP 0x200
-
-#define GOT_LOCATION (GOT_NAME | GOT_LATITUDE | GOT_LONGITUDE | GOT_ELEVATION | GOT_TIMESTAMP)
-#define TEST_GOT_LOCATION(state_) (((state_) & GOT_LOCATION) == GOT_LOCATION)
-
-#define TEST_IS_NAME(state_) (((state_) & (WAITING_NAME | GOT_NAME)) == WAITING_NAME)
-#define TEST_IS_LATITUDE(state_) (((state_) & (WAITING_LATITUDE | GOT_LATITUDE)) \
-                                  == WAITING_LATITUDE)
-#define TEST_IS_LONGITUDE(state_) (((state_) & (WAITING_LONGITUDE | GOT_LONGITUDE)) \
-                                   == WAITING_LONGITUDE)
-#define TEST_IS_ELEVATION(state_) (((state_) & (WAITING_ELEVATION | GOT_ELEVATION)) \
-                                   == WAITING_ELEVATION)
-#define TEST_IS_TIMESTAMP(state_) (((state_) & (WAITING_TIMESTAMP | GOT_TIMESTAMP)) \
-                                   == WAITING_TIMESTAMP)
 
 static void on_location_key_found(jsonlite_callback_context* context,
                                   jsonlite_token* token) {
@@ -1532,22 +1564,6 @@ typedef struct {
   void* context;
 } m2x_command_parsing_context_state;
 
-#define M2X_COMMAND_WAITING_ID 0x1
-#define M2X_COMMAND_GOT_ID 0x2
-#define M2X_COMMAND_WAITING_NAME 0x4
-#define M2X_COMMAND_GOT_NAME 0x8
-
-#define M2X_COMMAND_GOT_COMMAND (M2X_COMMAND_GOT_ID | M2X_COMMAND_GOT_NAME)
-#define M2X_COMMAND_TEST_GOT_COMMAND(state_) \
-  (((state_) & M2X_COMMAND_GOT_COMMAND) == M2X_COMMAND_GOT_COMMAND)
-
-#define M2X_COMMAND_TEST_IS_ID(state_) \
-  (((state_) & (M2X_COMMAND_WAITING_ID | M2X_COMMAND_GOT_ID)) == \
-   M2X_COMMAND_WAITING_ID)
-#define M2X_COMMAND_TEST_IS_NAME(state_) \
-  (((state_) & (M2X_COMMAND_WAITING_NAME | M2X_COMMAND_GOT_NAME)) == \
-   M2X_COMMAND_WAITING_NAME)
-
 static void m2x_on_command_key_found(jsonlite_callback_context* context,
                                      jsonlite_token* token)
 {
@@ -1650,6 +1666,195 @@ int M2XStreamClient::readCommand(m2x_command_read_callback callback,
   close();
   return (result == jsonlite_result_ok) ? (E_OK) : (E_JSON_INVALID);
 }
+
+#endif  /* M2X_READER_JSONLITE */
+
+// aJson(https://github.com/interactive-matter/aJson) based reader functions
+#ifdef M2X_READER_AJSON
+
+int M2XStreamClient::readStreamValue(stream_value_read_callback callback,
+                                     void* context) {
+  int err = skipHttpHeader();
+  if (err != E_OK) {
+    close();
+    return err;
+  }
+  err = 0;
+
+  aJsonStream stream(_client);
+  aJsonObject* response = aJson.parse(&stream);
+
+  aJsonObject* values = aJson.getObjectItem(response, "values");
+  if (values == NULL) { return err; }
+  aJsonObject* value = values->child;
+  int index = 0;
+
+  while (value) {
+    char* timestamp = NULL;
+    m2x_value value_content;
+    int value_type = 0, state = 0;
+
+    if (value->type == aJson_Object) {
+      aJsonObject* field = value->child;
+      while (field) {
+        if (strncmp(field->name, "timestamp", 9) == 0) {
+          if (field->type == aJson_String) {
+            timestamp = field->valuestring;
+            state |= GOT_AT;
+          }
+        } else if (strncmp(field->name, "value", 5) == 0) {
+          switch (field->type) {
+            case aJson_String:
+              value_content.value_string = field->valuestring;
+              value_type = 1;
+              state |= GOT_VALUE;
+            case aJson_Int:
+              value_content.value_integer = field->valueint;
+              value_type = 3;
+              state |= GOT_VALUE;
+              break;
+            case aJson_Float:
+              value_content.value_number = field->valuefloat;
+              value_type = 4;
+              state |= GOT_VALUE;
+              break;
+          }
+        }
+        field = field->next;
+      }
+    }
+
+    if (TEST_GOT_STREAM(state)) {
+      callback(timestamp, value_content, index++, context, value_type);
+    }
+    value = value->next;
+  }
+  aJson.deleteItem(response);
+  return err;
+}
+
+int M2XStreamClient::readLocation(location_read_callback callback,
+                                  void* context) {
+  int err = skipHttpHeader();
+  if (err != E_OK) {
+    close();
+    return err;
+  }
+  err = 0;
+
+  aJsonStream stream(_client);
+  aJsonObject* response = aJson.parse(&stream);
+
+  aJsonObject* waypoints = aJson.getObjectItem(response, "waypoints");
+  if (waypoints == NULL) { return err; }
+  aJsonObject* waypoint = waypoints->child;
+  int index = 0;
+
+  while (waypoint) {
+    char* name = NULL;
+    double latitude;
+    double longitude;
+    double elevation;
+    char* timestamp = NULL;
+    int state = 0;
+
+    if (waypoint->type == aJson_Object) {
+      aJsonObject* field = waypoint->child;
+      while (field) {
+        if (strncmp(field->name, "name", 4) == 0) {
+          if (field->type == aJson_String) {
+            name = field->valuestring;
+            state |= GOT_NAME;
+          }
+        } else if (strncmp(field->name, "latitude", 8) == 0) {
+          if (field->type == aJson_Int) {
+            latitude = field->valueint;
+          } else {
+            latitude = field->valuefloat;
+          }
+          state |= GOT_LATITUDE;
+        } else if (strncmp(field->name, "longitude", 9) == 0) {
+          if (field->type == aJson_Int) {
+            longitude = field->valueint;
+          } else {
+            longitude = field->valuefloat;
+          }
+          state |= GOT_LONGITUDE;
+        } else if (strncmp(field->name, "elevation", 9) == 0) {
+          if (field->type == aJson_Int) {
+            elevation = field->valueint;
+          } else {
+            elevation = field->valuefloat;
+          }
+          state |= GOT_ELEVATION;
+        } else if (strncmp(field->name, "timestamp", 9) == 0) {
+          if (field->type == aJson_String) {
+            timestamp = field->valuestring;
+            state |= GOT_TIMESTAMP;
+          }
+        }
+        field = field->next;
+      }
+    }
+
+    if (TEST_GOT_LOCATION(state)) {
+      callback(name, latitude, longitude, elevation, timestamp, index++, context);
+    }
+    waypoint = waypoint->next;
+  }
+  aJson.deleteItem(response);
+  return err;
+}
+
+int M2XStreamClient::readCommand(m2x_command_read_callback callback,
+                                 void* context) {
+  int err = skipHttpHeader();
+  if (err != E_OK) {
+    close();
+    return err;
+  }
+  err = 0;
+
+  aJsonStream stream(_client);
+  aJsonObject* response = aJson.parse(&stream);
+
+  aJsonObject* commands = aJson.getObjectItem(response, "commands");
+  if (commands == NULL) { return err; }
+  aJsonObject* command = commands->child;
+  int index = 0;
+
+  while (command) {
+    char* id = NULL;
+    char* name = NULL;
+    int state = 0;
+
+    if (command->type == aJson_Object) {
+      aJsonObject* field = command->child;
+      while (field) {
+        if (strncmp(field->name, "id", 2) == 0) {
+          if (field->type == aJson_String) {
+            id = field->valuestring;
+            state |= M2X_COMMAND_GOT_ID;
+          }
+        } else if (strncmp(field->name, "name", 4) == 0) {
+          if (field->type == aJson_String) {
+            name = field->valuestring;
+            state |= M2X_COMMAND_GOT_NAME;
+          }
+        }
+      }
+    }
+
+    if (M2X_COMMAND_TEST_GOT_COMMAND(state)) {
+      callback(id, name, index++, context);
+    }
+    command = command->next;
+  }
+  aJson.deleteItem(response);
+  return err;
+}
+
+#endif  /* M2X_READER_AJSON */
 
 #endif  /* M2X_ENABLE_READER */
 
