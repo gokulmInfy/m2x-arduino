@@ -1692,9 +1692,13 @@ int M2XStreamClient::readStreamValue(stream_value_read_callback callback,
 
   aJsonStream stream(_client);
   aJsonObject* response = aJson.parse(&stream);
+  if (response == NULL) { return err; }
 
   aJsonObject* values = aJson.getObjectItem(response, "values");
-  if (values == NULL) { return err; }
+  if (values == NULL) {
+    aJson.deleteItem(response);
+    return err;
+  }
   aJsonObject* value = values->child;
   int index = 0;
 
@@ -1753,9 +1757,13 @@ int M2XStreamClient::readLocation(location_read_callback callback,
 
   aJsonStream stream(_client);
   aJsonObject* response = aJson.parse(&stream);
+  if (response == NULL) { return err; }
 
   aJsonObject* waypoints = aJson.getObjectItem(response, "waypoints");
-  if (waypoints == NULL) { return err; }
+  if (waypoints == NULL) {
+    aJson.deleteItem(response);
+    return err;
+  }
   aJsonObject* waypoint = waypoints->child;
   int index = 0;
 
@@ -1826,9 +1834,13 @@ int M2XStreamClient::readCommand(m2x_command_read_callback callback,
 
   aJsonStream stream(_client);
   aJsonObject* response = aJson.parse(&stream);
+  if (response == NULL) { return err; }
 
   aJsonObject* commands = aJson.getObjectItem(response, "commands");
-  if (commands == NULL) { return err; }
+  if (commands == NULL) {
+    aJson.deleteItem(response);
+    return err;
+  }
   aJsonObject* command = commands->child;
   int index = 0;
 
