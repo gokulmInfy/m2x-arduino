@@ -2,7 +2,8 @@
 #define M2XStreamClient_h
 
 #if (!defined(ARDUINO_PLATFORM)) && (!defined(ESP8266_PLATFORM)) && \
-  (!defined(MBED_PLATFORM)) && (!defined(ENERGIA_PLATFORM))
+  (!defined(MBED_PLATFORM)) && (!defined(ENERGIA_PLATFORM)) && \
+  (!defined(CYPRESS_PLATFORM))
 #error "Platform definition is missing!"
 #endif
 
@@ -23,6 +24,10 @@
 #ifdef ENERGIA_PLATFORM
 #include "m2x-energia.h"
 #endif /* ENERGIA_PLATFORM */
+
+#ifdef CYPRESS_PLATFORM
+#include "m2x-cypress.h"
+#endif /* CYPRESS_PLATFORM */
 
 static const int E_OK = 0;
 static const int E_NOCONNECTION = -1;
