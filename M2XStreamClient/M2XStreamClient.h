@@ -379,7 +379,7 @@ private:
 #endif  /* M2X_ENABLE_READER */
 };
 
-
+#ifndef M2X_DISABLE_TIME_SERVICE
 // A ISO8601 timestamp generation service for M2X.
 // It uses the Time API provided by the M2X server to initialize
 // clock, then uses millis() function provided by Arduino to calculate
@@ -413,7 +413,7 @@ private:
   uint32_t _local_last_milli;
   M2XTimer _timer;
 };
-
+#endif  /* M2X_DISABLE_TIME_SERVICE */
 
 // Implementations
 
@@ -993,6 +993,7 @@ void M2XStreamClient::close() {
   _client->stop();
 }
 
+#ifndef M2X_DISABLE_TIME_SERVICE
 static inline int fill_iso8601_timestamp(int32_t seconds, int32_t milli,
                                          char* buffer, int* length);
 
@@ -1132,6 +1133,7 @@ static inline int fill_iso8601_timestamp(int32_t timestamp, int32_t milli,
   *length = i;
   return E_OK;
 }
+#endif  /* M2X_DISABLE_TIME_SERVICE */
 
 /* Reader functions */
 #ifdef M2X_ENABLE_READER
