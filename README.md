@@ -272,7 +272,7 @@ int deleteValues(const char* deviceId, const char* streamName,
 List stream values
 ------------------
 
-Since mbed microcontroller contains very limited memory, we cannot put the whole returned string in memory, parse it into JSON representations and read what we want. Instead, we use a callback-based mechanism here. We parse the returned JSON string piece by piece, whenever we got a new stream value point, we will call the following callback functions:
+Since Arduino microcontrollers contain very limited memory, we cannot put the whole returned string in memory, parse it into JSON representations and read what we want. Instead, we use a callback-based mechanism here. We parse the returned JSON string piece by piece, whenever we got a new stream value point, we will call the following callback functions:
 
 ```
 typedef void (*stream_value_read_callback)(const char* at,
